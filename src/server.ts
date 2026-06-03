@@ -6,6 +6,7 @@ import { createAuthHandlers } from './handlers/auth.js';
 import { createPostsHandlers } from './handlers/posts.js';
 import { createAuthHelper } from './helpers/auth.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { authLimiter, generalLimiter } from './middleware/rateLimiter.js';
 import { createRequireAuth } from './middleware/requireAuth.js';
 import { createPostsRepo } from './repositories/posts.js';
 import { createSessionsRepo } from './repositories/sessions.js';
@@ -21,6 +22,9 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json({ limit: HTTP.BODY_LIMIT }));
 app.use(cookieParser());
 
+// Apply general rate limit to all routes
+app.use(generalLimiter);
+
 // Wire dependencies
 const sessionsRepo = createSessionsRepo(pool);
 const usersRepo = createUsersRepo(pool);
@@ -30,8 +34,8 @@ const requireAuth = createRequireAuth(sessionsRepo);
 const authHandlers = createAuthHandlers({ authHelper, sessionsRepo, usersRepo });
 const postsHandlers = createPostsHandlers(postsRepo);
 
-// Mount route groups
-app.use('/auth', createAuthRouter(authHandlers));
+// Mount route groups -- auth gets a stricter rate limit
+app.use('/auth', authLimiter, createAuthRouter(authHandlers));
 app.use('/health', healthRouter);
 app.use('/posts', createPostsRouter(postsHandlers, requireAuth));
 
