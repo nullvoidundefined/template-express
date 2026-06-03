@@ -45,3 +45,7 @@ The users repository catches Postgres unique violation errors (code 23505) and r
 ## 011 - Global error handler returns JSON, not HTML
 
 Express's default error handler returns an HTML page. Since this is a JSON API, the global error handler catches unhandled errors and returns `{"error": "Internal server error"}`. The stack trace is logged server-side but never sent to the client.
+
+## 012 - CORS with explicit origin allowlist and credentials
+
+CORS is configured via the `CORS_ORIGIN` environment variable (comma-separated for multiple origins). Defaults to `http://localhost:3000` for local frontend development. `credentials: true` is required because we use cookies for authentication -- without it browsers won't send cookies cross-origin. The origin is not set to `*` because wildcard origins are incompatible with `credentials: true` and would allow any website to make authenticated requests.

@@ -5,6 +5,7 @@ import { HTTP } from './constants/http.js';
 import { createAuthHandlers } from './handlers/auth.js';
 import { createPostsHandlers } from './handlers/posts.js';
 import { createAuthHelper } from './helpers/auth.js';
+import { createCorsMiddleware } from './middleware/cors.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { authLimiter, generalLimiter } from './middleware/rateLimiter.js';
 import { createRequireAuth } from './middleware/requireAuth.js';
@@ -17,6 +18,9 @@ import { createPostsRouter } from './routes/posts.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// CORS must be before routes to handle preflight OPTIONS requests
+app.use(createCorsMiddleware());
 
 // Parse JSON bodies and cookies for all routes
 app.use(express.json({ limit: HTTP.BODY_LIMIT }));
