@@ -77,6 +77,13 @@ app.use(errorHandler);
 
 const server = app.listen(PORT, () => {
     logger.info(`Server running on port ${PORT}`);
+
+    // Run session cleanup once on startup as a fallback for environments without pg_cron
+    if (process.env.NODE_ENV !== 'test') {
+        sessionsRepo.deleteExpiredSessions().catch((err) => {
+            logger.error(err, 'Startup session cleanup failed');
+        });
+    }
 });
 
 function gracefulShutdown(signal: string) {
