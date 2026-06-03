@@ -59,6 +59,12 @@ function createAuthHandlers({ authHelper, sessionsRepo, usersRepo }: AuthHandler
             return;
         }
 
+        // Validate email format (basic check: contains @ with text on both sides)
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            res.status(HTTP.STATUS.BAD_REQUEST).json({ error: AUTH.ERRORS.EMAIL_INVALID_FORMAT });
+            return;
+        }
+
         // Validate input lengths
         if (email.length > AUTH.LIMITS.EMAIL_MAX) {
             res.status(HTTP.STATUS.BAD_REQUEST).json({ error: AUTH.ERRORS.EMAIL_TOO_LONG });
