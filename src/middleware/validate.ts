@@ -13,7 +13,7 @@ function validate(schema: ZodSchema, source: 'body' | 'params' | 'query' = 'body
         if (!result.success) {
             const firstError = result.error.issues[0].message;
             res.status(HTTP.STATUS.BAD_REQUEST).json(
-                createErrorResponse(ERROR_CODES.VALIDATION_ERROR, firstError),
+                createErrorResponse(ERROR_CODES.INPUT.VALIDATION_ERROR, firstError),
             );
             return;
         }

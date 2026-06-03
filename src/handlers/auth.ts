@@ -27,7 +27,7 @@ function createAuthHandlers({ authHelper, sessionsRepo, usersRepo }: AuthHandler
         const user = await usersRepo.findByEmail(email);
         if (!user || !(await bcrypt.compare(password, user.password_hash))) {
             res.status(HTTP.STATUS.UNAUTHORIZED).json(
-                createErrorResponse(ERROR_CODES.INVALID_CREDENTIALS, 'Invalid credentials'),
+                createErrorResponse(ERROR_CODES.AUTH.INVALID_CREDENTIALS, 'Invalid credentials'),
             );
             return;
         }
@@ -56,7 +56,7 @@ function createAuthHandlers({ authHelper, sessionsRepo, usersRepo }: AuthHandler
         const inserted = await usersRepo.insertUser(email, passwordHash);
         if (!inserted) {
             res.status(HTTP.STATUS.CONFLICT).json(
-                createErrorResponse(ERROR_CODES.EMAIL_ALREADY_REGISTERED, 'Email already registered'),
+                createErrorResponse(ERROR_CODES.AUTH.EMAIL_ALREADY_REGISTERED, 'Email already registered'),
             );
             return;
         }

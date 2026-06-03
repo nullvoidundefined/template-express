@@ -34,13 +34,13 @@ function errorHandler(err: Error, req: Request, res: Response, _next: NextFuncti
 
     if (isDatabaseError(err)) {
         res.status(HTTP.STATUS.SERVICE_UNAVAILABLE).json(
-            createErrorResponse(ERROR_CODES.DATABASE_UNAVAILABLE, 'Service temporarily unavailable'),
+            createErrorResponse(ERROR_CODES.SERVER.DATABASE_UNAVAILABLE, 'Service temporarily unavailable'),
         );
         return;
     }
 
     res.status(HTTP.STATUS.INTERNAL_SERVER_ERROR).json(
-        createErrorResponse(ERROR_CODES.INTERNAL_ERROR, 'Internal server error'),
+        createErrorResponse(ERROR_CODES.SERVER.INTERNAL_ERROR, 'Internal server error'),
     );
 }
 

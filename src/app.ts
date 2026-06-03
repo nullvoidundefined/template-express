@@ -81,7 +81,7 @@ function createApp(pool: Pool) {
     // Catch unmatched routes
     app.use((_req, res) => {
         res.status(HTTP.STATUS.NOT_FOUND).json(
-            createErrorResponse(ERROR_CODES.NOT_FOUND, 'Not found'),
+            createErrorResponse(ERROR_CODES.ROUTING.NOT_FOUND, 'Not found'),
         );
     });
 

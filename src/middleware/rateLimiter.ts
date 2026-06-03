@@ -3,7 +3,7 @@ import { HTTP } from '../constants/http.js';
 import { createErrorResponse, ERROR_CODES } from '../errors.js';
 
 const rateLimitResponse = createErrorResponse(
-    ERROR_CODES.RATE_LIMITED,
+    ERROR_CODES.RATE_LIMIT.EXCEEDED,
     'Too many requests, please try again later',
 );
 

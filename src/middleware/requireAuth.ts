@@ -12,7 +12,7 @@ function createRequireAuth(sessionsRepo: SessionsRepo) {
         // Reject requests with no session cookie
         if (!token) {
             res.status(HTTP.STATUS.UNAUTHORIZED).json(
-                createErrorResponse(ERROR_CODES.AUTH_REQUIRED, 'Authentication required'),
+                createErrorResponse(ERROR_CODES.AUTH.REQUIRED, 'Authentication required'),
             );
             return;
         }
@@ -22,7 +22,7 @@ function createRequireAuth(sessionsRepo: SessionsRepo) {
         if (!email) {
             res.clearCookie(AUTH.COOKIE_NAME);
             res.status(HTTP.STATUS.UNAUTHORIZED).json(
-                createErrorResponse(ERROR_CODES.SESSION_EXPIRED, 'Session expired'),
+                createErrorResponse(ERROR_CODES.AUTH.SESSION_EXPIRED, 'Session expired'),
             );
             return;
         }

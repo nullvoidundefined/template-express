@@ -25,7 +25,7 @@ function createPostsHandlers(postsRepo: PostsRepo) {
         const deleted = await postsRepo.deletePost(id, req.email!);
         if (!deleted) {
             res.status(HTTP.STATUS.NOT_FOUND).json(
-                createErrorResponse(ERROR_CODES.POST_NOT_FOUND, 'Post not found'),
+                createErrorResponse(ERROR_CODES.POSTS.NOT_FOUND, 'Post not found'),
             );
             return;
         }
@@ -40,7 +40,7 @@ function createPostsHandlers(postsRepo: PostsRepo) {
         // Only show posts belonging to the authenticated user
         if (!post || post.email !== req.email) {
             res.status(HTTP.STATUS.NOT_FOUND).json(
-                createErrorResponse(ERROR_CODES.POST_NOT_FOUND, 'Post not found'),
+                createErrorResponse(ERROR_CODES.POSTS.NOT_FOUND, 'Post not found'),
             );
             return;
         }
@@ -56,7 +56,7 @@ function createPostsHandlers(postsRepo: PostsRepo) {
         const post = await postsRepo.updatePost(id, req.email!, title, body);
         if (!post) {
             res.status(HTTP.STATUS.NOT_FOUND).json(
-                createErrorResponse(ERROR_CODES.POST_NOT_FOUND, 'Post not found'),
+                createErrorResponse(ERROR_CODES.POSTS.NOT_FOUND, 'Post not found'),
             );
             return;
         }
