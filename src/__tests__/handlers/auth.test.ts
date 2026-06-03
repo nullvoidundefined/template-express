@@ -50,62 +50,6 @@ describe('auth handlers', () => {
     });
 
     describe('register', () => {
-        it('returns 400 when email is missing', async () => {
-            const req = createMockReq({ body: { password: 'password123' } });
-            const res = createMockRes();
-
-            await handlers.register(req, res);
-
-            expect(res._status).toBe(400);
-            expect(res._json).toEqual({ error: 'Email and password required' });
-        });
-
-        it('returns 400 when password is missing', async () => {
-            const req = createMockReq({ body: { email: 'test@test.com' } });
-            const res = createMockRes();
-
-            await handlers.register(req, res);
-
-            expect(res._status).toBe(400);
-            expect(res._json).toEqual({ error: 'Email and password required' });
-        });
-
-        it('returns 400 when email is too long', async () => {
-            const req = createMockReq({
-                body: { email: 'a'.repeat(256) + '@test.com', password: 'password123' },
-            });
-            const res = createMockRes();
-
-            await handlers.register(req, res);
-
-            expect(res._status).toBe(400);
-            expect(res._json).toEqual({ error: 'Email must be 255 characters or less' });
-        });
-
-        it('returns 400 when password is too short', async () => {
-            const req = createMockReq({
-                body: { email: 'test@test.com', password: 'short' },
-            });
-            const res = createMockRes();
-
-            await handlers.register(req, res);
-
-            expect(res._status).toBe(400);
-            expect(res._json).toEqual({ error: 'Password must be at least 8 characters' });
-        });
-
-        it('returns 400 when password is too long', async () => {
-            const req = createMockReq({
-                body: { email: 'test@test.com', password: 'a'.repeat(73) },
-            });
-            const res = createMockRes();
-
-            await handlers.register(req, res);
-
-            expect(res._status).toBe(400);
-            expect(res._json).toEqual({ error: 'Password must be 72 characters or less' });
-        });
-
         it('returns 409 when email is already registered', async () => {
             const users = new Map([['taken@test.com', 'hash']]);
             usersRepo = createMockUsersRepo(users);
@@ -136,15 +80,6 @@ describe('auth handlers', () => {
     });
 
     describe('login', () => {
-        it('returns 400 when email is missing', async () => {
-            const req = createMockReq({ body: { password: 'password123' } });
-            const res = createMockRes();
-
-            await handlers.login(req, res);
-
-            expect(res._status).toBe(400);
-        });
-
         it('returns 401 when user does not exist', async () => {
             const req = createMockReq({
                 body: { email: 'nobody@test.com', password: 'password123' },

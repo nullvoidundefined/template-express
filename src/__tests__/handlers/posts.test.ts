@@ -48,51 +48,6 @@ describe('posts handlers', () => {
     });
 
     describe('create', () => {
-        it('returns 400 when title is missing', async () => {
-            const req = createMockReq({ body: { body: 'content' }, email: 'user@test.com' });
-            const res = createMockRes();
-
-            await handlers.create(req, res);
-
-            expect(res._status).toBe(400);
-            expect(res._json).toEqual({ error: 'Title and body required' });
-        });
-
-        it('returns 400 when body is missing', async () => {
-            const req = createMockReq({ body: { title: 'Title' }, email: 'user@test.com' });
-            const res = createMockRes();
-
-            await handlers.create(req, res);
-
-            expect(res._status).toBe(400);
-        });
-
-        it('returns 400 when title is too long', async () => {
-            const req = createMockReq({
-                body: { title: 'a'.repeat(256), body: 'content' },
-                email: 'user@test.com',
-            });
-            const res = createMockRes();
-
-            await handlers.create(req, res);
-
-            expect(res._status).toBe(400);
-            expect(res._json).toEqual({ error: 'Title must be 255 characters or less' });
-        });
-
-        it('returns 400 when body is too long', async () => {
-            const req = createMockReq({
-                body: { title: 'Title', body: 'a'.repeat(10_001) },
-                email: 'user@test.com',
-            });
-            const res = createMockRes();
-
-            await handlers.create(req, res);
-
-            expect(res._status).toBe(400);
-            expect(res._json).toEqual({ error: 'Body must be 10,000 characters or less' });
-        });
-
         it('returns 201 with post on success', async () => {
             const req = createMockReq({
                 body: { title: 'Hello', body: 'World' },
@@ -113,7 +68,10 @@ describe('posts handlers', () => {
 
     describe('list', () => {
         it('returns empty array when user has no posts', async () => {
-            const req = createMockReq({ email: 'user@test.com', query: {} });
+            const req = createMockReq({
+                email: 'user@test.com',
+                query: { limit: 20, offset: 0 },
+            });
             const res = createMockRes();
 
             await handlers.list(req, res);
@@ -127,7 +85,10 @@ describe('posts handlers', () => {
             await postsRepo.createPost('user@test.com', 'Mine', 'My post');
             await postsRepo.createPost('other@test.com', 'Theirs', 'Their post');
 
-            const req = createMockReq({ email: 'user@test.com', query: {} });
+            const req = createMockReq({
+                email: 'user@test.com',
+                query: { limit: 20, offset: 0 },
+            });
             const res = createMockRes();
 
             await handlers.list(req, res);
@@ -137,31 +98,11 @@ describe('posts handlers', () => {
             expect(result.posts[0].title).toBe('Mine');
             expect(result.total).toBe(1);
         });
-
-        it('respects limit and offset query parameters', async () => {
-            await postsRepo.createPost('user@test.com', 'First', 'Body');
-            await postsRepo.createPost('user@test.com', 'Second', 'Body');
-            await postsRepo.createPost('user@test.com', 'Third', 'Body');
-
-            const req = createMockReq({
-                email: 'user@test.com',
-                query: { limit: '2', offset: '1' },
-            });
-            const res = createMockRes();
-
-            await handlers.list(req, res);
-
-            const result = res._json as { posts: Post[]; total: number; limit: number; offset: number };
-            expect(result.posts).toHaveLength(2);
-            expect(result.total).toBe(3);
-            expect(result.limit).toBe(2);
-            expect(result.offset).toBe(1);
-        });
     });
 
     describe('show', () => {
         it('returns 404 when post does not exist', async () => {
-            const req = createMockReq({ params: { id: '999' }, email: 'user@test.com' });
+            const req = createMockReq({ params: { id: 999 }, email: 'user@test.com' });
             const res = createMockRes();
 
             await handlers.show(req, res);
@@ -172,7 +113,7 @@ describe('posts handlers', () => {
         it('returns 404 when post belongs to another user', async () => {
             await postsRepo.createPost('other@test.com', 'Title', 'Body');
 
-            const req = createMockReq({ params: { id: '1' }, email: 'user@test.com' });
+            const req = createMockReq({ params: { id: 1 }, email: 'user@test.com' });
             const res = createMockRes();
 
             await handlers.show(req, res);
@@ -183,7 +124,7 @@ describe('posts handlers', () => {
         it('returns the post when it belongs to the user', async () => {
             await postsRepo.createPost('user@test.com', 'My Post', 'Content');
 
-            const req = createMockReq({ params: { id: '1' }, email: 'user@test.com' });
+            const req = createMockReq({ params: { id: 1 }, email: 'user@test.com' });
             const res = createMockRes();
 
             await handlers.show(req, res);
@@ -194,7 +135,7 @@ describe('posts handlers', () => {
 
     describe('remove', () => {
         it('returns 404 when post does not exist', async () => {
-            const req = createMockReq({ params: { id: '999' }, email: 'user@test.com' });
+            const req = createMockReq({ params: { id: 999 }, email: 'user@test.com' });
             const res = createMockRes();
 
             await handlers.remove(req, res);
@@ -205,7 +146,7 @@ describe('posts handlers', () => {
         it('returns 404 when trying to delete another users post', async () => {
             await postsRepo.createPost('other@test.com', 'Title', 'Body');
 
-            const req = createMockReq({ params: { id: '1' }, email: 'user@test.com' });
+            const req = createMockReq({ params: { id: 1 }, email: 'user@test.com' });
             const res = createMockRes();
 
             await handlers.remove(req, res);
@@ -216,7 +157,7 @@ describe('posts handlers', () => {
         it('deletes the post and returns success message', async () => {
             await postsRepo.createPost('user@test.com', 'Title', 'Body');
 
-            const req = createMockReq({ params: { id: '1' }, email: 'user@test.com' });
+            const req = createMockReq({ params: { id: 1 }, email: 'user@test.com' });
             const res = createMockRes();
 
             await handlers.remove(req, res);
@@ -226,36 +167,9 @@ describe('posts handlers', () => {
     });
 
     describe('update', () => {
-        it('returns 400 when title is missing', async () => {
-            const req = createMockReq({
-                params: { id: '1' },
-                body: { body: 'content' },
-                email: 'user@test.com',
-            });
-            const res = createMockRes();
-
-            await handlers.update(req, res);
-
-            expect(res._status).toBe(400);
-        });
-
-        it('returns 400 when title is too long', async () => {
-            const req = createMockReq({
-                params: { id: '1' },
-                body: { title: 'a'.repeat(256), body: 'content' },
-                email: 'user@test.com',
-            });
-            const res = createMockRes();
-
-            await handlers.update(req, res);
-
-            expect(res._status).toBe(400);
-            expect(res._json).toEqual({ error: 'Title must be 255 characters or less' });
-        });
-
         it('returns 404 when post does not exist', async () => {
             const req = createMockReq({
-                params: { id: '999' },
+                params: { id: 999 },
                 body: { title: 'New', body: 'Content' },
                 email: 'user@test.com',
             });
@@ -270,7 +184,7 @@ describe('posts handlers', () => {
             await postsRepo.createPost('other@test.com', 'Title', 'Body');
 
             const req = createMockReq({
-                params: { id: '1' },
+                params: { id: 1 },
                 body: { title: 'New', body: 'Content' },
                 email: 'user@test.com',
             });
@@ -285,7 +199,7 @@ describe('posts handlers', () => {
             await postsRepo.createPost('user@test.com', 'Old Title', 'Old Body');
 
             const req = createMockReq({
-                params: { id: '1' },
+                params: { id: 1 },
                 body: { title: 'New Title', body: 'New Body' },
                 email: 'user@test.com',
             });

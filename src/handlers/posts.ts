@@ -4,56 +4,22 @@ import { POST } from '../constants/posts.js';
 import type { PostsRepo } from '../repositories/posts.js';
 
 function createPostsHandlers(postsRepo: PostsRepo) {
-    // Parses and validates the :id param, returns null and sends 400 if invalid
-    function parseId(req: Request, res: Response): number | null {
-        const id = Number(req.params.id);
-        if (!Number.isInteger(id) || id <= 0) {
-            res.status(HTTP.STATUS.BAD_REQUEST).json({ error: POST.ERRORS.INVALID_ID });
-            return null;
-        }
-        return id;
-    }
-
     async function create(req: Request, res: Response) {
         const { title, body } = req.body;
-
-        // Validate required fields
-        if (!title || !body) {
-            res.status(HTTP.STATUS.BAD_REQUEST).json({
-                error: POST.ERRORS.TITLE_AND_BODY_REQUIRED,
-            });
-            return;
-        }
-
-        // Validate input lengths
-        if (title.length > POST.LIMITS.TITLE_MAX) {
-            res.status(HTTP.STATUS.BAD_REQUEST).json({ error: POST.ERRORS.TITLE_TOO_LONG });
-            return;
-        }
-        if (body.length > POST.LIMITS.BODY_MAX) {
-            res.status(HTTP.STATUS.BAD_REQUEST).json({ error: POST.ERRORS.BODY_TOO_LONG });
-            return;
-        }
 
         const post = await postsRepo.createPost(req.email!, title, body);
         res.status(HTTP.STATUS.CREATED).json(post);
     }
 
     async function list(req: Request, res: Response) {
-        // Clamp limit to PAGE_SIZE_MAX, default to PAGE_SIZE_DEFAULT
-        const limit = Math.min(
-            Math.max(Number(req.query.limit) || POST.LIMITS.PAGE_SIZE_DEFAULT, 1),
-            POST.LIMITS.PAGE_SIZE_MAX,
-        );
-        const offset = Math.max(Number(req.query.offset) || 0, 0);
+        const { limit, offset } = req.query as unknown as { limit: number; offset: number };
 
         const { posts, total } = await postsRepo.findByEmail(req.email!, limit, offset);
         res.json({ posts, total, limit, offset });
     }
 
     async function remove(req: Request, res: Response) {
-        const id = parseId(req, res);
-        if (id === null) return;
+        const { id } = req.params as unknown as { id: number };
 
         // Only delete if the post belongs to the authenticated user
         const deleted = await postsRepo.deletePost(id, req.email!);
@@ -66,9 +32,7 @@ function createPostsHandlers(postsRepo: PostsRepo) {
     }
 
     async function show(req: Request, res: Response) {
-        const id = parseId(req, res);
-        if (id === null) return;
-
+        const { id } = req.params as unknown as { id: number };
         const post = await postsRepo.findById(id);
 
         // Only show posts belonging to the authenticated user
@@ -81,28 +45,8 @@ function createPostsHandlers(postsRepo: PostsRepo) {
     }
 
     async function update(req: Request, res: Response) {
-        const id = parseId(req, res);
-        if (id === null) return;
-
+        const { id } = req.params as unknown as { id: number };
         const { title, body } = req.body;
-
-        // Validate required fields
-        if (!title || !body) {
-            res.status(HTTP.STATUS.BAD_REQUEST).json({
-                error: POST.ERRORS.TITLE_AND_BODY_REQUIRED,
-            });
-            return;
-        }
-
-        // Validate input lengths
-        if (title.length > POST.LIMITS.TITLE_MAX) {
-            res.status(HTTP.STATUS.BAD_REQUEST).json({ error: POST.ERRORS.TITLE_TOO_LONG });
-            return;
-        }
-        if (body.length > POST.LIMITS.BODY_MAX) {
-            res.status(HTTP.STATUS.BAD_REQUEST).json({ error: POST.ERRORS.BODY_TOO_LONG });
-            return;
-        }
 
         // Only update if the post belongs to the authenticated user
         const post = await postsRepo.updatePost(id, req.email!, title, body);

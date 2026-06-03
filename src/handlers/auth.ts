@@ -17,14 +17,6 @@ function createAuthHandlers({ authHelper, sessionsRepo, usersRepo }: AuthHandler
     async function login(req: Request, res: Response) {
         const { email, password } = req.body;
 
-        // Validate required fields
-        if (!email || !password) {
-            res.status(HTTP.STATUS.BAD_REQUEST).json({
-                error: AUTH.ERRORS.EMAIL_AND_PASSWORD_REQUIRED,
-            });
-            return;
-        }
-
         // Verify user exists and password matches
         const user = await usersRepo.findByEmail(email);
         if (!user || !(await bcrypt.compare(password, user.password_hash))) {
@@ -50,34 +42,6 @@ function createAuthHandlers({ authHelper, sessionsRepo, usersRepo }: AuthHandler
 
     async function register(req: Request, res: Response) {
         const { email, password } = req.body;
-
-        // Validate required fields
-        if (!email || !password) {
-            res.status(HTTP.STATUS.BAD_REQUEST).json({
-                error: AUTH.ERRORS.EMAIL_AND_PASSWORD_REQUIRED,
-            });
-            return;
-        }
-
-        // Validate email format (basic check: contains @ with text on both sides)
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            res.status(HTTP.STATUS.BAD_REQUEST).json({ error: AUTH.ERRORS.EMAIL_INVALID_FORMAT });
-            return;
-        }
-
-        // Validate input lengths
-        if (email.length > AUTH.LIMITS.EMAIL_MAX) {
-            res.status(HTTP.STATUS.BAD_REQUEST).json({ error: AUTH.ERRORS.EMAIL_TOO_LONG });
-            return;
-        }
-        if (password.length < AUTH.LIMITS.PASSWORD_MIN) {
-            res.status(HTTP.STATUS.BAD_REQUEST).json({ error: AUTH.ERRORS.PASSWORD_TOO_SHORT });
-            return;
-        }
-        if (password.length > AUTH.LIMITS.PASSWORD_MAX) {
-            res.status(HTTP.STATUS.BAD_REQUEST).json({ error: AUTH.ERRORS.PASSWORD_TOO_LONG });
-            return;
-        }
 
         // Insert user, relying on primary key constraint to prevent duplicates
         const passwordHash = await bcrypt.hash(password, AUTH.LIMITS.BCRYPT_SALT_ROUNDS);

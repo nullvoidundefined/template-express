@@ -111,3 +111,7 @@ The pool uses `ssl: { rejectUnauthorized: false }` in production because Neon an
 ## 027 - Startup env validation in production
 
 The server exits immediately with a clear error message if `DATABASE_URL` or `CORS_ORIGIN` are missing in production. This catches misconfigured deploys at boot time instead of at first request, when the error surfaces as a confusing connection refused or CORS block.
+
+## 028 - Zod schemas as single source of truth for validation and types
+
+Input validation moved from hand-written if-checks in handlers to Zod schemas in `src/schemas/`. Schemas encode constraints (required, min/max length, format, coercion) declaratively. TypeScript types are derived from schemas via `z.infer`, eliminating drift between validation and types. A reusable `validate` middleware in the routes layer runs the schema before the handler, so handlers contain only business logic. Validation-specific error messages and limits that were previously in constants files now live in the schemas. Constants files retain only non-validation values (cookie name, bcrypt rounds, session TTL, HTTP status codes, business-logic error messages like "Post not found").

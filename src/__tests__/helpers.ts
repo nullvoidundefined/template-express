@@ -1,13 +1,14 @@
 import type { Request, Response } from 'express';
 
-function createMockReq(overrides: Partial<Request> = {}): Request {
+// Accepts any shape for params/query since Zod middleware coerces types before handlers run
+function createMockReq(overrides: Record<string, unknown> = {}): Request {
     return {
         body: {},
         cookies: {},
         params: {},
         query: {},
         ...overrides,
-    } as Request;
+    } as unknown as Request;
 }
 
 // Chainable mock that records status, json, cookies, and cleared cookies for assertions
