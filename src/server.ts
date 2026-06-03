@@ -14,7 +14,7 @@ import { createPostsRepo } from './repositories/posts.js';
 import { createSessionsRepo } from './repositories/sessions.js';
 import { createUsersRepo } from './repositories/users.js';
 import { createAuthRouter } from './routes/auth.js';
-import healthRouter from './routes/health.js';
+import { createHealthRouter } from './routes/health.js';
 import { createPostsRouter } from './routes/posts.js';
 
 // Validate required environment variables in production
@@ -60,7 +60,7 @@ if (process.env.NODE_ENV !== 'test') {
 } else {
     app.use('/auth', createAuthRouter(authHandlers));
 }
-app.use('/health', healthRouter);
+app.use('/health', createHealthRouter(pool));
 app.use('/posts', createPostsRouter(postsHandlers, requireAuth));
 
 // Catch unmatched routes
