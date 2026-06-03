@@ -7,6 +7,7 @@ import { createPostsHandlers } from './handlers/posts.js';
 import { createAuthHelper } from './helpers/auth.js';
 import { createCorsMiddleware } from './middleware/cors.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { httpLogger, logger } from './middleware/logger.js';
 import { authLimiter, generalLimiter } from './middleware/rateLimiter.js';
 import { createRequireAuth } from './middleware/requireAuth.js';
 import { createPostsRepo } from './repositories/posts.js';
@@ -18,6 +19,9 @@ import { createPostsRouter } from './routes/posts.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Request logging -- before all middleware so every request is captured
+app.use(httpLogger);
 
 // CORS must be before routes to handle preflight OPTIONS requests
 app.use(createCorsMiddleware());
@@ -58,5 +62,5 @@ app.use((_req, res) => {
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    logger.info(`Server running on port ${PORT}`);
 });

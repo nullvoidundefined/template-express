@@ -63,3 +63,7 @@ Raw session tokens (UUIDs) are sent to the client in cookies. Before any databas
 Expired sessions are cleaned up hourly by a pg_cron job inside Postgres (`0 * * * *`). This replaces an earlier `setInterval` approach which had problems: it didn't run when the app was down, ran redundantly on every instance, and drifted from wall-clock time. pg_cron runs exactly once regardless of app instance count, survives app restarts, and keeps the cleanup lifecycle where the data lives. The migration uses a `DO` block with `EXCEPTION` handling so it silently skips on databases without pg_cron (e.g., local development).
 
 **TODO:** Verify pg_cron is available on Neon before deploying. Neon supports pg_cron but it may need to be enabled per-project in the Neon dashboard. If not available, fall back to a Railway cron service calling a cleanup endpoint or script.
+
+## 016 - Pino for structured request logging
+
+Using pino + pino-http over Winston or Morgan. Pino outputs structured JSON (one line per entry, parseable by log aggregators) and is significantly faster due to async serialization. pino-http automatically logs method, URL, status code, and response time for every request. In development, pino-pretty formats output for readability. In test, the logger is silenced entirely (`level: 'silent'`). The error handler uses the same pino logger instance instead of `console.error` for consistent log format.
