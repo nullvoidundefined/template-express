@@ -22,8 +22,10 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json({ limit: HTTP.BODY_LIMIT }));
 app.use(cookieParser());
 
-// Apply general rate limit to all routes
-app.use(generalLimiter);
+// Skip rate limiting in test environment
+if (process.env.NODE_ENV !== 'test') {
+    app.use(generalLimiter);
+}
 
 // Wire dependencies
 const sessionsRepo = createSessionsRepo(pool);
@@ -34,8 +36,12 @@ const requireAuth = createRequireAuth(sessionsRepo);
 const authHandlers = createAuthHandlers({ authHelper, sessionsRepo, usersRepo });
 const postsHandlers = createPostsHandlers(postsRepo);
 
-// Mount route groups -- auth gets a stricter rate limit
-app.use('/auth', authLimiter, createAuthRouter(authHandlers));
+// Mount route groups -- auth gets a stricter rate limit in non-test environments
+if (process.env.NODE_ENV !== 'test') {
+    app.use('/auth', authLimiter, createAuthRouter(authHandlers));
+} else {
+    app.use('/auth', createAuthRouter(authHandlers));
+}
 app.use('/health', healthRouter);
 app.use('/posts', createPostsRouter(postsHandlers, requireAuth));
 
