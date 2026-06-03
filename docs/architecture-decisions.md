@@ -119,3 +119,7 @@ Input validation moved from hand-written if-checks in handlers to Zod schemas in
 ## 029 - Request ID propagation for end-to-end traceability
 
 Every request gets a UUID assigned by pino-http's `genReqId`. If the client or load balancer sends an `X-Request-Id` header, the server reuses it instead of generating a new one. The ID is included in every log line for that request (via pino-http's child logger), returned to the client in the `X-Request-Id` response header, and used by the error handler via `req.log` instead of the global logger. This lets you grep for a single ID and see the complete lifecycle of a request, and lets clients report the ID in bug reports for server-side debugging.
+
+## 030 - Machine-readable error codes on all error responses
+
+Every error response includes both a `code` (machine-readable, e.g. `VALIDATION_ERROR`, `AUTH_REQUIRED`, `POST_NOT_FOUND`) and an `error` (human-readable message). Clients switch on `code` for programmatic handling (e.g., which form field to highlight) and display `error` to users. All error codes are defined in a single registry (`src/errors.ts`) with a `createErrorResponse` helper that enforces the shape. Human-readable error messages that were previously in constants files now live at their call sites alongside their codes, keeping code and message co-located. The `code` is a stable API contract; the `error` message can be changed or localized without breaking clients.

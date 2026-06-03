@@ -1,9 +1,5 @@
 const AUTH = {
     COOKIE_NAME: 'session',
-    ERRORS: {
-        EMAIL_ALREADY_REGISTERED: 'Email already registered',
-        INVALID_CREDENTIALS: 'Invalid credentials',
-    },
     LIMITS: {
         BCRYPT_SALT_ROUNDS: 10,
     },

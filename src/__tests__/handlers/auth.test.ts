@@ -63,7 +63,7 @@ describe('auth handlers', () => {
             await handlers.register(req, res);
 
             expect(res._status).toBe(409);
-            expect(res._json).toEqual({ error: 'Email already registered' });
+            expect(res._json).toEqual({ code: 'EMAIL_ALREADY_REGISTERED', error: 'Email already registered' });
         });
 
         it('returns 201 with email on success', async () => {
@@ -89,7 +89,7 @@ describe('auth handlers', () => {
             await handlers.login(req, res);
 
             expect(res._status).toBe(401);
-            expect(res._json).toEqual({ error: 'Invalid credentials' });
+            expect(res._json).toEqual({ code: 'INVALID_CREDENTIALS', error: 'Invalid credentials' });
         });
 
         it('returns 401 when password is wrong', async () => {
@@ -106,7 +106,7 @@ describe('auth handlers', () => {
             await handlers.login(req, res);
 
             expect(res._status).toBe(401);
-            expect(res._json).toEqual({ error: 'Invalid credentials' });
+            expect(res._json).toEqual({ code: 'INVALID_CREDENTIALS', error: 'Invalid credentials' });
         });
 
         it('returns 200 with email on success', async () => {

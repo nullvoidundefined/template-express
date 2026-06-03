@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { HTTP } from '../constants/http.js';
-import { POST } from '../constants/posts.js';
+import { createErrorResponse, ERROR_CODES } from '../errors.js';
 import type { PostsRepo } from '../repositories/posts.js';
 
 function createPostsHandlers(postsRepo: PostsRepo) {
@@ -24,7 +24,9 @@ function createPostsHandlers(postsRepo: PostsRepo) {
         // Only delete if the post belongs to the authenticated user
         const deleted = await postsRepo.deletePost(id, req.email!);
         if (!deleted) {
-            res.status(HTTP.STATUS.NOT_FOUND).json({ error: POST.ERRORS.NOT_FOUND });
+            res.status(HTTP.STATUS.NOT_FOUND).json(
+                createErrorResponse(ERROR_CODES.POST_NOT_FOUND, 'Post not found'),
+            );
             return;
         }
 
@@ -37,7 +39,9 @@ function createPostsHandlers(postsRepo: PostsRepo) {
 
         // Only show posts belonging to the authenticated user
         if (!post || post.email !== req.email) {
-            res.status(HTTP.STATUS.NOT_FOUND).json({ error: POST.ERRORS.NOT_FOUND });
+            res.status(HTTP.STATUS.NOT_FOUND).json(
+                createErrorResponse(ERROR_CODES.POST_NOT_FOUND, 'Post not found'),
+            );
             return;
         }
 
@@ -51,7 +55,9 @@ function createPostsHandlers(postsRepo: PostsRepo) {
         // Only update if the post belongs to the authenticated user
         const post = await postsRepo.updatePost(id, req.email!, title, body);
         if (!post) {
-            res.status(HTTP.STATUS.NOT_FOUND).json({ error: POST.ERRORS.NOT_FOUND });
+            res.status(HTTP.STATUS.NOT_FOUND).json(
+                createErrorResponse(ERROR_CODES.POST_NOT_FOUND, 'Post not found'),
+            );
             return;
         }
 

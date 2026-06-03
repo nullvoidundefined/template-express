@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import pool from './db.js';
 import { HTTP } from './constants/http.js';
+import { createErrorResponse, ERROR_CODES } from './errors.js';
 import { createAuthHandlers } from './handlers/auth.js';
 import { createPostsHandlers } from './handlers/posts.js';
 import { createAuthHelper } from './helpers/auth.js';
@@ -75,7 +76,9 @@ app.use('/posts', createPostsRouter(postsHandlers, requireAuth));
 
 // Catch unmatched routes
 app.use((_req, res) => {
-    res.status(HTTP.STATUS.NOT_FOUND).json({ error: 'Not found' });
+    res.status(HTTP.STATUS.NOT_FOUND).json(
+        createErrorResponse(ERROR_CODES.NOT_FOUND, 'Not found'),
+    );
 });
 
 // Global error handler -- must be after all routes

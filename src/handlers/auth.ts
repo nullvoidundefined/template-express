@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { AUTH } from '../constants/auth.js';
 import { HTTP } from '../constants/http.js';
+import { createErrorResponse, ERROR_CODES } from '../errors.js';
 import type { AuthHelper } from '../helpers/auth.js';
 import { hashToken } from '../helpers/hash.js';
 import type { SessionsRepo } from '../repositories/sessions.js';
@@ -20,7 +21,9 @@ function createAuthHandlers({ authHelper, sessionsRepo, usersRepo }: AuthHandler
         // Verify user exists and password matches
         const user = await usersRepo.findByEmail(email);
         if (!user || !(await bcrypt.compare(password, user.password_hash))) {
-            res.status(HTTP.STATUS.UNAUTHORIZED).json({ error: AUTH.ERRORS.INVALID_CREDENTIALS });
+            res.status(HTTP.STATUS.UNAUTHORIZED).json(
+                createErrorResponse(ERROR_CODES.INVALID_CREDENTIALS, 'Invalid credentials'),
+            );
             return;
         }
 
@@ -47,7 +50,9 @@ function createAuthHandlers({ authHelper, sessionsRepo, usersRepo }: AuthHandler
         const passwordHash = await bcrypt.hash(password, AUTH.LIMITS.BCRYPT_SALT_ROUNDS);
         const inserted = await usersRepo.insertUser(email, passwordHash);
         if (!inserted) {
-            res.status(HTTP.STATUS.CONFLICT).json({ error: AUTH.ERRORS.EMAIL_ALREADY_REGISTERED });
+            res.status(HTTP.STATUS.CONFLICT).json(
+                createErrorResponse(ERROR_CODES.EMAIL_ALREADY_REGISTERED, 'Email already registered'),
+            );
             return;
         }
 
