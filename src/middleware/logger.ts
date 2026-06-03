@@ -2,15 +2,13 @@ import crypto from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import pino from 'pino';
 import { pinoHttp } from 'pino-http';
-
-const isProduction = process.env.NODE_ENV === 'production';
-const isTest = process.env.NODE_ENV === 'test';
+import { config } from '../config.js';
 
 const logger = pino({
     // Silent in test to avoid noisy output
-    level: isTest ? 'silent' : 'info',
+    level: config.isTest ? 'silent' : 'info',
     // undefined in production = raw NDJSON to stdout for log aggregators
-    transport: isProduction ? undefined : { target: 'pino-pretty' },
+    transport: config.isProduction ? undefined : { target: 'pino-pretty' },
 });
 
 // Custom serializers to keep logs concise -- only log what's useful for debugging

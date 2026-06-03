@@ -1,13 +1,12 @@
 import pg from 'pg';
-
-const isProduction = process.env.NODE_ENV === 'production';
+import { config } from './config.js';
 
 const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/demo_express',
+    connectionString: config.databaseUrl,
     // Neon and Railway require SSL; local dev does not
-    ssl: isProduction ? { rejectUnauthorized: false } : false,
+    ssl: config.isProduction ? { rejectUnauthorized: false } : false,
     // Keep connection count low for managed Postgres free tiers
-    max: isProduction ? 5 : 10,
+    max: config.isProduction ? 5 : 10,
 });
 
 export default pool;

@@ -1,5 +1,6 @@
 import type { Response } from 'express';
 import crypto from 'node:crypto';
+import { config } from '../config.js';
 import { AUTH } from '../constants/auth.js';
 import type { SessionsRepo } from '../repositories/sessions.js';
 import { hashToken } from './hash.js';
@@ -13,7 +14,7 @@ function createAuthHelper(sessionsRepo: SessionsRepo) {
         res.cookie(AUTH.COOKIE_NAME, token, {
             httpOnly: true,
             sameSite: 'lax',
-            secure: process.env.NODE_ENV === 'production',
+            secure: config.isProduction,
         });
     }
 

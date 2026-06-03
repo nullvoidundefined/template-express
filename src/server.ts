@@ -1,26 +1,16 @@
 import pool from './db.js';
+import { config } from './config.js';
 import { HTTP } from './constants/http.js';
 import { createApp } from './app.js';
 import { logger } from './middleware/logger.js';
 
-// Validate required environment variables in production
-if (process.env.NODE_ENV === 'production') {
-    const required = ['DATABASE_URL', 'CORS_ORIGIN'];
-    const missing = required.filter((key) => !process.env[key]);
-    if (missing.length > 0) {
-        console.error(`Missing required environment variables: ${missing.join(', ')}`);
-        process.exit(1);
-    }
-}
-
-const PORT = process.env.PORT || HTTP.DEFAULT_PORT;
 const { app, sessionsRepo } = createApp(pool);
 
-const server = app.listen(PORT, () => {
-    logger.info(`Server running on port ${PORT}`);
+const server = app.listen(config.port, () => {
+    logger.info(`Server running on port ${config.port}`);
 
     // Run session cleanup once on startup as a fallback for environments without pg_cron
-    if (process.env.NODE_ENV !== 'test') {
+    if (!config.isTest) {
         sessionsRepo.deleteExpiredSessions().catch((err) => {
             logger.error(err, 'Startup session cleanup failed');
         });

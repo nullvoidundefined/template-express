@@ -2,6 +2,7 @@ import type { Pool } from 'pg';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import { config } from './config.js';
 import { HTTP } from './constants/http.js';
 import { createErrorResponse, ERROR_CODES } from './errors.js';
 import { createAuthHandlers } from './handlers/auth.js';
@@ -44,7 +45,7 @@ function createApp(pool: Pool) {
     app.use(cookieParser());
 
     // Skip rate limiting in test environment
-    if (process.env.NODE_ENV !== 'test') {
+    if (!config.isTest) {
         app.use(generalLimiter);
     }
 
@@ -58,7 +59,7 @@ function createApp(pool: Pool) {
     const postsHandlers = createPostsHandlers(postsRepo);
 
     // Mount route groups -- auth gets a stricter rate limit in non-test environments
-    if (process.env.NODE_ENV !== 'test') {
+    if (!config.isTest) {
         app.use('/auth', authLimiter, createAuthRouter(authHandlers));
     } else {
         app.use('/auth', createAuthRouter(authHandlers));

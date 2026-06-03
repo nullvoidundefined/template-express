@@ -127,3 +127,7 @@ Every error response includes both a `code` (machine-readable, e.g. `VALIDATION_
 ## 031 - App factory separated from process entry point
 
 `app.ts` exports `createApp(pool)` which builds a fully wired Express app without starting the listener or registering signal handlers. `server.ts` is a thin entry point that imports the app, calls `listen()`, handles SIGTERM/SIGINT, and runs startup cleanup. This separation means tests can import `createApp` with a test pool and make HTTP requests via supertest without booting a live server, binding a port, or triggering side effects. The factory returns both the `app` and `sessionsRepo` so the server can run startup cleanup without re-creating the repo.
+
+## 032 - Centralized config module with Zod validation
+
+All environment variables are read and validated once in `src/config.ts` using a Zod schema. The rest of the codebase imports `config` and reads typed properties (`config.port`, `config.isProduction`, `config.databaseUrl`) instead of reaching into `process.env` directly. No `process.env` reads exist outside of `config.ts`. Production-required variables (`DATABASE_URL`, `CORS_ORIGIN`) are enforced at startup with a clear error message. Defaults are only applied in non-production environments. This gives one place to see every env var the app needs, type-safe access everywhere, and startup-time validation instead of first-request-time failures.

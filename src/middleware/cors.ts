@@ -1,8 +1,9 @@
 import cors from 'cors';
+import { config } from '../config.js';
 
-// Parse allowed origins from CORS_ORIGIN env var (comma-separated)
+// Parse allowed origins from config (comma-separated for multiple origins)
 function createCorsMiddleware() {
-    const raw = process.env.CORS_ORIGIN || 'http://localhost:3000';
+    const raw = config.corsOrigin;
     const origin = raw.includes(',') ? raw.split(',').map((s) => s.trim()) : raw;
 
     return cors({
