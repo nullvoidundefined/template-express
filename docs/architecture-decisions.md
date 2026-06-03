@@ -71,3 +71,15 @@ Using pino + pino-http over Winston or Morgan. Pino outputs structured JSON (one
 ## 017 - Graceful shutdown on SIGTERM/SIGINT
 
 On termination signals, the server stops accepting new connections, waits for in-flight requests to complete, closes the database pool, then exits with code 0. A 10-second timeout forces exit if draining takes too long, preventing stuck requests from blocking deploys. Both SIGTERM (process managers) and SIGINT (Ctrl+C) are handled. The shutdown sequence is logged at each step for observability.
+
+## 018 - Custom pino serializers for concise logs
+
+Default pino-http serializers dump full request headers, response headers, query params, and remote address -- ~30 lines per request. Custom serializers reduce this to method, URL, status code, and response time. This keeps development output scannable and production log volume manageable without losing the information needed for debugging.
+
+## 019 - 404 catch-all middleware returns JSON
+
+A three-argument middleware after all routes catches unmatched URLs and returns `{"error": "Not found"}`. Without this, Express returns its default HTML error page, which is useless for API clients. Placed after routes but before the error handler so it doesn't interfere with the four-argument error middleware signature.
+
+## 020 - hashToken utility in helpers, not repositories
+
+The `hashToken` function lives in `helpers/hash.ts` and is called by the auth helper, middleware, and handler -- the layers that bridge the raw cookie token and the database. Repositories are unaware of hashing and store/query whatever string they receive. This means the hashing strategy can be changed in one place without touching the data access layer.
