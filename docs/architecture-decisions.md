@@ -143,3 +143,15 @@ The error handler distinguishes database connectivity errors from application bu
 ## 035 - URL-prefix API versioning (/v1/)
 
 All API routes are grouped under `/v1/` (`/v1/auth/*`, `/v1/posts/*`, `/v1/health`). URL prefix was chosen over header-based or query-parameter versioning because it's visible in logs, cacheable, easy to route at the load balancer level, and trivial to test with curl. Health is also mounted at the root (`/health`) for load balancers that probe a fixed path. When the API needs breaking changes, `/v2/` routes can be added alongside `/v1/` and clients migrate on their own timeline. The versioned router is a standard Express `Router` mounted on the app with `app.use('/v1', v1)`.
+
+## 036 - GET /auth/me for session identity check
+
+A `GET /v1/auth/me` endpoint returns `{ email }` for the authenticated user. Protected by `requireAuth` so unauthenticated requests get a 401. This allows frontends to check session validity on page load without re-logging in or optimistically assuming the cookie is valid until the first 401 on another route.
+
+## 037 - Hand-written OpenAPI 3.1 spec as the API contract
+
+The API contract is defined in `docs/openapi.yaml` and covers every endpoint, request/response schema, error codes, pagination parameters, idempotency headers, and authentication. The spec is hand-written rather than auto-generated from code because the contract should drive the implementation, not the other way around. Changes to the API should be reviewable as spec diffs before code is written. Clients can generate TypeScript types from the spec.
+
+## 038 - Multi-stage Dockerfile for production deployment
+
+The Dockerfile uses two stages. Stage 1 (`build`) installs all dependencies including dev, compiles TypeScript, and is discarded. Stage 2 copies only the compiled `dist/`, production `node_modules`, and migration SQL files into a slim Node 22 image. The final image contains no TypeScript source, no dev dependencies, no test files, and no git history. A `.dockerignore` excludes `node_modules`, `dist`, `.env`, `.git`, `docs`, and test directories from the build context.
