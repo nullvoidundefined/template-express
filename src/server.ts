@@ -1,6 +1,7 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import pool from './db.js';
+import { AUTH } from './constants/auth.js';
 import { HTTP } from './constants/http.js';
 import { createAuthHandlers } from './handlers/auth.js';
 import { createPostsHandlers } from './handlers/posts.js';
@@ -59,4 +60,13 @@ app.use(errorHandler);
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+
+    // Periodically clean up expired sessions to prevent table bloat
+    if (process.env.NODE_ENV !== 'test') {
+        setInterval(() => {
+            sessionsRepo.deleteExpiredSessions().catch((err) => {
+                console.error('Session cleanup failed:', err);
+            });
+        }, AUTH.SESSION_CLEANUP_INTERVAL_MS);
+    }
 });

@@ -57,3 +57,7 @@ Raw session tokens (UUIDs) are sent to the client in cookies. Before any databas
 ## 014 - Limit/offset pagination with total count
 
 `GET /posts` accepts `?limit=` and `?offset=` query parameters. Defaults to 20 per page, max 100. The response includes `total` so clients can calculate page count. The count and data queries run in parallel via `Promise.all` to avoid sequential round trips. Chosen over cursor-based pagination for simplicity -- limit/offset is sufficient when posts are scoped to a single user and total counts are small.
+
+## 015 - Session cleanup via setInterval, not external scheduler
+
+Expired sessions are deleted every hour via `setInterval` inside the server process. No cron job or external scheduler. The cleanup is fire-and-forget with a `.catch()` to log errors without crashing the server. Skipped in test environment. This is appropriate for a single-server app; multi-server deployments would use a dedicated worker or database-level scheduled job to avoid duplicate runs.

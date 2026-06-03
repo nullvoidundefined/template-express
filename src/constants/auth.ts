@@ -13,6 +13,7 @@ const AUTH = {
         PASSWORD_MAX: 72,
         PASSWORD_MIN: 8,
     },
+    SESSION_CLEANUP_INTERVAL_MS: 60 * 60 * 1000,
     SESSION_TTL_DAYS: 7,
 } as const;
 
