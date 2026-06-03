@@ -77,6 +77,32 @@ describe('posts repository', () => {
         });
     });
 
+    describe('updatePost', () => {
+        it('returns undefined when post does not exist', async () => {
+            const result = await postsRepo.updatePost(999, 'user@test.com', 'Title', 'Body');
+
+            expect(result).toBeUndefined();
+        });
+
+        it('returns undefined when email does not match', async () => {
+            await seedUser('owner@test.com');
+            const post = await postsRepo.createPost('owner@test.com', 'Title', 'Body');
+
+            const result = await postsRepo.updatePost(post.id, 'other@test.com', 'New', 'New');
+
+            expect(result).toBeUndefined();
+        });
+
+        it('updates and returns the post', async () => {
+            await seedUser();
+            const post = await postsRepo.createPost('user@test.com', 'Old', 'Old body');
+
+            const updated = await postsRepo.updatePost(post.id, 'user@test.com', 'New', 'New body');
+
+            expect(updated).toMatchObject({ id: post.id, title: 'New', body: 'New body' });
+        });
+    });
+
     describe('deletePost', () => {
         it('returns false when post does not exist', async () => {
             const result = await postsRepo.deletePost(999, 'user@test.com');

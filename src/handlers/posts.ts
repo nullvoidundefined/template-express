@@ -47,6 +47,38 @@ function createPostsHandlers(postsRepo: PostsRepo) {
         res.json({ message: 'Post deleted' });
     }
 
+    async function update(req: Request, res: Response) {
+        const id = Number(req.params.id);
+        const { title, body } = req.body;
+
+        // Validate required fields
+        if (!title || !body) {
+            res.status(HTTP.STATUS.BAD_REQUEST).json({
+                error: POST.ERRORS.TITLE_AND_BODY_REQUIRED,
+            });
+            return;
+        }
+
+        // Validate input lengths
+        if (title.length > POST.LIMITS.TITLE_MAX) {
+            res.status(HTTP.STATUS.BAD_REQUEST).json({ error: POST.ERRORS.TITLE_TOO_LONG });
+            return;
+        }
+        if (body.length > POST.LIMITS.BODY_MAX) {
+            res.status(HTTP.STATUS.BAD_REQUEST).json({ error: POST.ERRORS.BODY_TOO_LONG });
+            return;
+        }
+
+        // Only update if the post belongs to the authenticated user
+        const post = await postsRepo.updatePost(id, req.email!, title, body);
+        if (!post) {
+            res.status(HTTP.STATUS.NOT_FOUND).json({ error: POST.ERRORS.NOT_FOUND });
+            return;
+        }
+
+        res.json(post);
+    }
+
     async function show(req: Request, res: Response) {
         const id = Number(req.params.id);
         const post = await postsRepo.findById(id);
@@ -60,7 +92,7 @@ function createPostsHandlers(postsRepo: PostsRepo) {
         res.json(post);
     }
 
-    return { create, list, remove, show };
+    return { create, list, remove, show, update };
 }
 
 export { createPostsHandlers };

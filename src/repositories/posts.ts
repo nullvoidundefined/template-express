@@ -26,6 +26,20 @@ function createPostsRepo(pool: Pool) {
         return (result.rowCount ?? 0) > 0;
     }
 
+    // Scoped to email to prevent users from updating other users' posts
+    async function updatePost(
+        id: number,
+        email: string,
+        title: string,
+        body: string,
+    ): Promise<Post | undefined> {
+        const result = await pool.query(
+            'UPDATE posts SET title = $1, body = $2 WHERE id = $3 AND email = $4 RETURNING *',
+            [title, body, id, email],
+        );
+        return result.rows[0];
+    }
+
     async function findByEmail(email: string): Promise<Post[]> {
         const result = await pool.query(
             'SELECT * FROM posts WHERE email = $1 ORDER BY created_at DESC',
@@ -39,7 +53,7 @@ function createPostsRepo(pool: Pool) {
         return result.rows[0];
     }
 
-    return { createPost, deletePost, findByEmail, findById };
+    return { createPost, deletePost, findByEmail, findById, updatePost };
 }
 
 export { createPostsRepo };

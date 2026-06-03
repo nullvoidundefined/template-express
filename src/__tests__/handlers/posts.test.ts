@@ -26,6 +26,13 @@ function createMockPostsRepo(): PostsRepo {
         async findById(id: number) {
             return posts.find((p) => p.id === id);
         },
+        async updatePost(id: number, email: string, title: string, body: string) {
+            const post = posts.find((p) => p.id === id && p.email === email);
+            if (!post) return undefined;
+            post.title = title;
+            post.body = body;
+            return post;
+        },
     };
 }
 
@@ -191,6 +198,78 @@ describe('posts handlers', () => {
             await handlers.remove(req, res);
 
             expect(res._json).toEqual({ message: 'Post deleted' });
+        });
+    });
+
+    describe('update', () => {
+        it('returns 400 when title is missing', async () => {
+            const req = createMockReq({
+                params: { id: '1' },
+                body: { body: 'content' },
+                email: 'user@test.com',
+            });
+            const res = createMockRes();
+
+            await handlers.update(req, res);
+
+            expect(res._status).toBe(400);
+        });
+
+        it('returns 400 when title is too long', async () => {
+            const req = createMockReq({
+                params: { id: '1' },
+                body: { title: 'a'.repeat(256), body: 'content' },
+                email: 'user@test.com',
+            });
+            const res = createMockRes();
+
+            await handlers.update(req, res);
+
+            expect(res._status).toBe(400);
+            expect(res._json).toEqual({ error: 'Title must be 255 characters or less' });
+        });
+
+        it('returns 404 when post does not exist', async () => {
+            const req = createMockReq({
+                params: { id: '999' },
+                body: { title: 'New', body: 'Content' },
+                email: 'user@test.com',
+            });
+            const res = createMockRes();
+
+            await handlers.update(req, res);
+
+            expect(res._status).toBe(404);
+        });
+
+        it('returns 404 when post belongs to another user', async () => {
+            await postsRepo.createPost('other@test.com', 'Title', 'Body');
+
+            const req = createMockReq({
+                params: { id: '1' },
+                body: { title: 'New', body: 'Content' },
+                email: 'user@test.com',
+            });
+            const res = createMockRes();
+
+            await handlers.update(req, res);
+
+            expect(res._status).toBe(404);
+        });
+
+        it('updates and returns the post on success', async () => {
+            await postsRepo.createPost('user@test.com', 'Old Title', 'Old Body');
+
+            const req = createMockReq({
+                params: { id: '1' },
+                body: { title: 'New Title', body: 'New Body' },
+                email: 'user@test.com',
+            });
+            const res = createMockRes();
+
+            await handlers.update(req, res);
+
+            expect(res._json).toMatchObject({ title: 'New Title', body: 'New Body' });
         });
     });
 });

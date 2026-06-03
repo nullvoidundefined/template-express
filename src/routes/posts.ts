@@ -11,6 +11,7 @@ function createPostsRouter(handlers: PostsHandlers, requireAuth: RequestHandler)
     router.get('/', handlers.list);
     router.get('/:id', handlers.show);
     router.post('/', handlers.create);
+    router.put('/:id', handlers.update);
     router.delete('/:id', handlers.remove);
 
     return router;
