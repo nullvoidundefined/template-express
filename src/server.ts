@@ -85,10 +85,12 @@ function gracefulShutdown(signal: string) {
             logger.error(err, 'Error closing database pool');
         }
 
+        // Clean shutdown completed -- cancel the force-exit timer
         clearTimeout(forceExit);
         process.exit(0);
     });
 }
 
+// SIGTERM: sent by Railway/Docker on deploy; SIGINT: Ctrl-C in local dev
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));

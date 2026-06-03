@@ -23,7 +23,7 @@ async function migrate() {
             .filter((f) => f.endsWith('.sql'))
             .sort();
 
-        // Check which migrations have already been applied
+        // Load all applied names into a Set for O(1) lookup per file
         const applied = await pool.query('SELECT name FROM migrations');
         const appliedSet = new Set(applied.rows.map((r) => r.name));
 
@@ -44,6 +44,7 @@ async function migrate() {
             } catch (error) {
                 await pool.query('ROLLBACK');
                 console.error(`Failed: ${file}`, error);
+                // Exit immediately so subsequent migrations don't run on a broken schema
                 process.exit(1);
             }
         }

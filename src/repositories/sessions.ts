@@ -6,6 +6,7 @@ function createSessionsRepo(pool: Pool) {
         await pool.query('INSERT INTO sessions (token, email) VALUES ($1, $2)', [token, email]);
     }
 
+    // Parameterized integer * INTERVAL avoids injecting raw text into SQL
     async function deleteExpiredSessions() {
         await pool.query(
             "DELETE FROM sessions WHERE created_at < now() - $1 * INTERVAL '1 day'",

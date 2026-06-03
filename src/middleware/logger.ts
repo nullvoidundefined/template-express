@@ -7,6 +7,7 @@ const isTest = process.env.NODE_ENV === 'test';
 const logger = pino({
     // Silent in test to avoid noisy output
     level: isTest ? 'silent' : 'info',
+    // undefined in production = raw NDJSON to stdout for log aggregators
     transport: isProduction ? undefined : { target: 'pino-pretty' },
 });
 
