@@ -10,6 +10,7 @@ const AUTH = {
         PASSWORD_TOO_SHORT: 'Password must be at least 8 characters',
     },
     LIMITS: {
+        BCRYPT_SALT_ROUNDS: 10,
         EMAIL_MAX: 255,
         PASSWORD_MAX: 72,
         PASSWORD_MIN: 8,

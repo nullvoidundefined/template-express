@@ -80,7 +80,7 @@ function createAuthHandlers({ authHelper, sessionsRepo, usersRepo }: AuthHandler
         }
 
         // Insert user, relying on primary key constraint to prevent duplicates
-        const passwordHash = await bcrypt.hash(password, 10);
+        const passwordHash = await bcrypt.hash(password, AUTH.LIMITS.BCRYPT_SALT_ROUNDS);
         const inserted = await usersRepo.insertUser(email, passwordHash);
         if (!inserted) {
             res.status(HTTP.STATUS.CONFLICT).json({ error: AUTH.ERRORS.EMAIL_ALREADY_REGISTERED });
