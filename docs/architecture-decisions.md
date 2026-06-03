@@ -61,3 +61,5 @@ Raw session tokens (UUIDs) are sent to the client in cookies. Before any databas
 ## 015 - Session cleanup via pg_cron, not application-level scheduler
 
 Expired sessions are cleaned up hourly by a pg_cron job inside Postgres (`0 * * * *`). This replaces an earlier `setInterval` approach which had problems: it didn't run when the app was down, ran redundantly on every instance, and drifted from wall-clock time. pg_cron runs exactly once regardless of app instance count, survives app restarts, and keeps the cleanup lifecycle where the data lives. The migration uses a `DO` block with `EXCEPTION` handling so it silently skips on databases without pg_cron (e.g., local development).
+
+**TODO:** Verify pg_cron is available on Neon before deploying. Neon supports pg_cron but it may need to be enabled per-project in the Neon dashboard. If not available, fall back to a Railway cron service calling a cleanup endpoint or script.
