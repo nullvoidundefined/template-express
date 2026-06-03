@@ -1,5 +1,6 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import pool from './db.js';
 import { HTTP } from './constants/http.js';
 import { createAuthHandlers } from './handlers/auth.js';
@@ -29,6 +30,9 @@ if (process.env.NODE_ENV === 'production') {
 
 const app = express();
 const PORT = process.env.PORT || HTTP.DEFAULT_PORT;
+
+// Security headers (X-Content-Type-Options, X-Frame-Options, etc.)
+app.use(helmet());
 
 // Request logging -- before all middleware so every request is captured
 app.use(httpLogger);
