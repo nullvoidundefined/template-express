@@ -46,10 +46,19 @@ beforeAll(async () => {
     for (const file of files) {
         if (appliedSet.has(file)) continue;
         const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf-8');
-        await testPool.query('BEGIN');
-        await testPool.query(sql);
-        await testPool.query('INSERT INTO migrations (name) VALUES ($1)', [file]);
-        await testPool.query('COMMIT');
+        // Acquire a dedicated client so the transaction runs on a single connection
+        const client = await testPool.connect();
+        try {
+            await client.query('BEGIN');
+            await client.query(sql);
+            await client.query('INSERT INTO migrations (name) VALUES ($1)', [file]);
+            await client.query('COMMIT');
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
     }
 });
 

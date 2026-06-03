@@ -27,7 +27,7 @@ async function migrate() {
         const applied = await pool.query('SELECT name FROM migrations');
         const appliedSet = new Set(applied.rows.map((r) => r.name));
 
-        // Run each unapplied migration inside a transaction
+        // Run each unapplied migration on a single connection to ensure transaction integrity
         for (const file of files) {
             if (appliedSet.has(file)) {
                 continue;
@@ -35,17 +35,21 @@ async function migrate() {
 
             const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf-8');
 
-            await pool.query('BEGIN');
+            // Acquire a dedicated client so BEGIN/COMMIT/ROLLBACK run on the same connection
+            const client = await pool.connect();
             try {
-                await pool.query(sql);
-                await pool.query('INSERT INTO migrations (name) VALUES ($1)', [file]);
-                await pool.query('COMMIT');
+                await client.query('BEGIN');
+                await client.query(sql);
+                await client.query('INSERT INTO migrations (name) VALUES ($1)', [file]);
+                await client.query('COMMIT');
                 console.log(`Applied: ${file}`);
             } catch (error) {
-                await pool.query('ROLLBACK');
+                await client.query('ROLLBACK');
                 console.error(`Failed: ${file}`, error);
                 // Exit immediately so subsequent migrations don't run on a broken schema
                 process.exit(1);
+            } finally {
+                client.release();
             }
         }
 
