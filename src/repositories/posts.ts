@@ -1,5 +1,7 @@
 import type { Pool } from 'pg';
 
+const POST_COLUMNS = 'id, email, title, body, created_at';
+
 interface Post {
     id: number;
     email: string;
@@ -11,7 +13,7 @@ interface Post {
 function createPostsRepo(pool: Pool) {
     async function createPost(email: string, title: string, body: string): Promise<Post> {
         const result = await pool.query(
-            'INSERT INTO posts (email, title, body) VALUES ($1, $2, $3) RETURNING *',
+            `INSERT INTO posts (email, title, body) VALUES ($1, $2, $3) RETURNING ${POST_COLUMNS}`,
             [email, title, body],
         );
         return result.rows[0];
@@ -26,6 +28,26 @@ function createPostsRepo(pool: Pool) {
         return (result.rowCount ?? 0) > 0;
     }
 
+    async function findByEmail(
+        email: string,
+        limit: number,
+        offset: number,
+    ): Promise<{ posts: Post[]; total: number }> {
+        const [dataResult, countResult] = await Promise.all([
+            pool.query(
+                `SELECT ${POST_COLUMNS} FROM posts WHERE email = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+                [email, limit, offset],
+            ),
+            pool.query('SELECT count(*)::int AS total FROM posts WHERE email = $1', [email]),
+        ]);
+        return { posts: dataResult.rows, total: countResult.rows[0].total };
+    }
+
+    async function findById(id: number): Promise<Post | undefined> {
+        const result = await pool.query(`SELECT ${POST_COLUMNS} FROM posts WHERE id = $1`, [id]);
+        return result.rows[0];
+    }
+
     // Scoped to email to prevent users from updating other users' posts
     async function updatePost(
         id: number,
@@ -34,30 +56,9 @@ function createPostsRepo(pool: Pool) {
         body: string,
     ): Promise<Post | undefined> {
         const result = await pool.query(
-            'UPDATE posts SET title = $1, body = $2 WHERE id = $3 AND email = $4 RETURNING *',
+            `UPDATE posts SET title = $1, body = $2 WHERE id = $3 AND email = $4 RETURNING ${POST_COLUMNS}`,
             [title, body, id, email],
         );
-        return result.rows[0];
-    }
-
-    async function findByEmail(
-        email: string,
-        limit: number,
-        offset: number,
-    ): Promise<{ posts: Post[]; total: number }> {
-        const [dataResult, countResult] = await Promise.all([
-            pool.query('SELECT * FROM posts WHERE email = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3', [
-                email,
-                limit,
-                offset,
-            ]),
-            pool.query('SELECT count(*)::int AS total FROM posts WHERE email = $1', [email]),
-        ]);
-        return { posts: dataResult.rows, total: countResult.rows[0].total };
-    }
-
-    async function findById(id: number): Promise<Post | undefined> {
-        const result = await pool.query('SELECT * FROM posts WHERE id = $1', [id]);
         return result.rows[0];
     }
 
