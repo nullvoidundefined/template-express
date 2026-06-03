@@ -17,6 +17,16 @@ import { createAuthRouter } from './routes/auth.js';
 import healthRouter from './routes/health.js';
 import { createPostsRouter } from './routes/posts.js';
 
+// Validate required environment variables in production
+if (process.env.NODE_ENV === 'production') {
+    const required = ['DATABASE_URL', 'CORS_ORIGIN'];
+    const missing = required.filter((key) => !process.env[key]);
+    if (missing.length > 0) {
+        console.error(`Missing required environment variables: ${missing.join(', ')}`);
+        process.exit(1);
+    }
+}
+
 const app = express();
 const PORT = process.env.PORT || HTTP.DEFAULT_PORT;
 
