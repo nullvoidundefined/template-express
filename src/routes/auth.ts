@@ -1,10 +1,14 @@
 import { Router } from 'express';
-import { login, logout, register } from '../handlers/auth.js';
+import type { AuthHandlers } from '../handlers/auth.js';
 
-const router = Router();
+function createAuthRouter(handlers: AuthHandlers) {
+    const router = Router();
 
-router.post('/login', login);
-router.post('/logout', logout);
-router.post('/register', register);
+    router.post('/login', handlers.login);
+    router.post('/logout', handlers.logout);
+    router.post('/register', handlers.register);
 
-export default router;
+    return router;
+}
+
+export { createAuthRouter };

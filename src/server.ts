@@ -1,10 +1,18 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
+import pool from './db.js';
 import { HTTP } from './constants/http.js';
+import { createAuthHandlers } from './handlers/auth.js';
+import { createPostsHandlers } from './handlers/posts.js';
+import { createAuthHelper } from './helpers/auth.js';
 import { errorHandler } from './middleware/errorHandler.js';
-import authRouter from './routes/auth.js';
+import { createRequireAuth } from './middleware/requireAuth.js';
+import { createPostsRepo } from './repositories/posts.js';
+import { createSessionsRepo } from './repositories/sessions.js';
+import { createUsersRepo } from './repositories/users.js';
+import { createAuthRouter } from './routes/auth.js';
 import healthRouter from './routes/health.js';
-import postsRouter from './routes/posts.js';
+import { createPostsRouter } from './routes/posts.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -13,10 +21,19 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json({ limit: HTTP.BODY_LIMIT }));
 app.use(cookieParser());
 
+// Wire dependencies
+const sessionsRepo = createSessionsRepo(pool);
+const usersRepo = createUsersRepo(pool);
+const postsRepo = createPostsRepo(pool);
+const authHelper = createAuthHelper(sessionsRepo);
+const requireAuth = createRequireAuth(sessionsRepo);
+const authHandlers = createAuthHandlers({ authHelper, sessionsRepo, usersRepo });
+const postsHandlers = createPostsHandlers(postsRepo);
+
 // Mount route groups
-app.use('/auth', authRouter);
+app.use('/auth', createAuthRouter(authHandlers));
 app.use('/health', healthRouter);
-app.use('/posts', postsRouter);
+app.use('/posts', createPostsRouter(postsHandlers, requireAuth));
 
 // Catch unmatched routes
 app.use((_req, res) => {
