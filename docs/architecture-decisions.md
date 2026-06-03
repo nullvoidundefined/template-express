@@ -123,3 +123,7 @@ Every request gets a UUID assigned by pino-http's `genReqId`. If the client or l
 ## 030 - Machine-readable error codes on all error responses
 
 Every error response includes both a `code` (machine-readable, e.g. `VALIDATION_ERROR`, `AUTH_REQUIRED`, `POST_NOT_FOUND`) and an `error` (human-readable message). Clients switch on `code` for programmatic handling (e.g., which form field to highlight) and display `error` to users. All error codes are defined in a single registry (`src/errors.ts`) with a `createErrorResponse` helper that enforces the shape. Human-readable error messages that were previously in constants files now live at their call sites alongside their codes, keeping code and message co-located. The `code` is a stable API contract; the `error` message can be changed or localized without breaking clients.
+
+## 031 - App factory separated from process entry point
+
+`app.ts` exports `createApp(pool)` which builds a fully wired Express app without starting the listener or registering signal handlers. `server.ts` is a thin entry point that imports the app, calls `listen()`, handles SIGTERM/SIGINT, and runs startup cleanup. This separation means tests can import `createApp` with a test pool and make HTTP requests via supertest without booting a live server, binding a port, or triggering side effects. The factory returns both the `app` and `sessionsRepo` so the server can run startup cleanup without re-creating the repo.
