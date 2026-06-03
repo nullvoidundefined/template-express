@@ -7,6 +7,7 @@ export default defineConfig({
         sequence: {
             concurrent: false,
         },
+        // Run test files sequentially to avoid database races
         fileParallelism: false,
     },
 });

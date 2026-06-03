@@ -26,7 +26,7 @@ beforeAll(async () => {
         await adminPool.end();
     }
 
-    // Run migrations against the test database
+    // Run migrations against the test database (same logic as migrate.ts)
     await testPool.query(`
         CREATE TABLE IF NOT EXISTS migrations (
             id SERIAL PRIMARY KEY,

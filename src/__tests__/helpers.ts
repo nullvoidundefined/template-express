@@ -9,6 +9,7 @@ function createMockReq(overrides: Partial<Request> = {}): Request {
     } as Request;
 }
 
+// Chainable mock that records status, json, cookies, and cleared cookies for assertions
 function createMockRes(): Response & {
     _status: number;
     _json: unknown;
