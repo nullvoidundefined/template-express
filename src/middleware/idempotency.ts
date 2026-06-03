@@ -13,7 +13,8 @@ function createIdempotencyMiddleware(idempotencyRepo: IdempotencyRepo) {
             return;
         }
 
-        // Requires authentication so we can scope keys per user
+        // requireAuth runs before this on protected routes, so missing email
+        // means a public route -- skip silently rather than erroring
         if (!req.email) {
             next();
             return;

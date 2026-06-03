@@ -8,7 +8,8 @@ interface StoredResponse {
 }
 
 function createIdempotencyRepo(pool: Pool) {
-    // Returns the stored response if this key has been seen, undefined otherwise
+    // Returns the stored response if this key has been seen within the TTL window
+    // Parameterized integer * INTERVAL avoids injecting raw text into SQL
     async function findByKey(key: string, email: string): Promise<StoredResponse | undefined> {
         const result = await pool.query(
             `SELECT status_code, response_body FROM idempotency_keys

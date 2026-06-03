@@ -68,6 +68,7 @@ function createApp(pool: Pool) {
 
     // Group all API routes under /v1
     const v1 = Router();
+    // Skip auth rate limiter in test environment (same reason as generalLimiter above)
     if (!config.isTest) {
         v1.use('/auth', authLimiter, createAuthRouter(authHandlers));
     } else {

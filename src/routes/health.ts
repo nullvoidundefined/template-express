@@ -10,7 +10,8 @@ function createHealthRouter(pool: Pool) {
             await pool.query('SELECT 1');
             res.json({ status: 'ok' });
         } catch {
-            // Database unreachable -- report unhealthy so load balancers route traffic away
+            // 500 (not 503) intentionally -- load balancers treat any 5xx as unhealthy,
+            // and health probes expect a simple pass/fail, not a retry-later signal
             res.status(HTTP.STATUS.INTERNAL_SERVER_ERROR).json({ status: 'error' });
         }
     });

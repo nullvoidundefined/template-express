@@ -18,7 +18,7 @@ function validate(schema: ZodSchema, source: 'body' | 'params' | 'query' = 'body
             return;
         }
 
-        // Replace with parsed data so handlers receive coerced/defaulted values
+        // Mutate in place because req.body/params/query are read-only properties
         Object.assign(req[source], result.data);
         next();
     };

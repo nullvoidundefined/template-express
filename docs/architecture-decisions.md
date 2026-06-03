@@ -78,7 +78,7 @@ Default pino-http serializers dump full request headers, response headers, query
 
 ## 019 - 404 catch-all middleware returns JSON
 
-A three-argument middleware after all routes catches unmatched URLs and returns `{"error": "Not found"}`. Without this, Express returns its default HTML error page, which is useless for API clients. Placed after routes but before the error handler so it doesn't interfere with the four-argument error middleware signature.
+A two-argument middleware (`_req, res`) after all routes catches unmatched URLs and returns `{"code": "NOT_FOUND", "error": "Not found"}`. Without this, Express returns its default HTML error page, which is useless for API clients. Placed after routes but before the error handler. Using two arguments (not three) keeps it distinct from the four-argument error middleware signature that Express uses for error handling.
 
 ## 020 - hashToken utility in helpers, not repositories
 
@@ -90,7 +90,7 @@ The `hashToken` function lives in `helpers/hash.ts` and is called by the auth he
 
 ## 022 - Health endpoint checks database connectivity
 
-The `/health` endpoint runs `SELECT 1` against the pool. If the database is unreachable, it returns 500 with `{"status": "error"}` instead of a false-positive 200. Load balancers and Railway health checks use this endpoint to detect unhealthy instances and route traffic away.
+The `/health` endpoint runs `SELECT 1` against the pool. If the database is unreachable, it returns 500 (not 503) with `{"status": "error"}` instead of a false-positive 200. The 500 is intentional here even though ADR-034 returns 503 for database errors on API routes -- health probes are a pass/fail signal for load balancers, not a retry-later signal for clients. Load balancers and Railway health checks use this endpoint to detect unhealthy instances and route traffic away.
 
 ## 023 - Helmet for security response headers
 
@@ -114,7 +114,7 @@ The server exits immediately with a clear error message if `DATABASE_URL` or `CO
 
 ## 028 - Zod schemas as single source of truth for validation and types
 
-Input validation moved from hand-written if-checks in handlers to Zod schemas in `src/schemas/`. Schemas encode constraints (required, min/max length, format, coercion) declaratively. TypeScript types are derived from schemas via `z.infer`, eliminating drift between validation and types. A reusable `validate` middleware in the routes layer runs the schema before the handler, so handlers contain only business logic. Validation-specific error messages and limits that were previously in constants files now live in the schemas. Constants files retain only non-validation values (cookie name, bcrypt rounds, session TTL, HTTP status codes, business-logic error messages like "Post not found").
+Input validation moved from hand-written if-checks in handlers to Zod schemas in `src/schemas/`. Schemas encode constraints (required, min/max length, format, coercion) declaratively. TypeScript types are derived from schemas via `z.infer`, eliminating drift between validation and types. A reusable `validate` middleware in the routes layer runs the schema before the handler, so handlers contain only business logic. Validation-specific error messages and limits that were previously in constants files now live in the schemas. Constants files retain only non-validation values (cookie name, bcrypt rounds, session TTL, HTTP status codes, rate limit config). Business-logic error messages (e.g., "Post not found") live inline at their call sites alongside their error codes, keeping code and message co-located.
 
 ## 029 - Request ID propagation for end-to-end traceability
 
