@@ -30,8 +30,15 @@ function createPostsHandlers(postsRepo: PostsRepo) {
     }
 
     async function list(req: Request, res: Response) {
-        const posts = await postsRepo.findByEmail(req.email!);
-        res.json(posts);
+        // Clamp limit to PAGE_SIZE_MAX, default to PAGE_SIZE_DEFAULT
+        const limit = Math.min(
+            Math.max(Number(req.query.limit) || POST.LIMITS.PAGE_SIZE_DEFAULT, 1),
+            POST.LIMITS.PAGE_SIZE_MAX,
+        );
+        const offset = Math.max(Number(req.query.offset) || 0, 0);
+
+        const { posts, total } = await postsRepo.findByEmail(req.email!, limit, offset);
+        res.json({ posts, total, limit, offset });
     }
 
     async function remove(req: Request, res: Response) {

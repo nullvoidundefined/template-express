@@ -40,12 +40,20 @@ function createPostsRepo(pool: Pool) {
         return result.rows[0];
     }
 
-    async function findByEmail(email: string): Promise<Post[]> {
-        const result = await pool.query(
-            'SELECT * FROM posts WHERE email = $1 ORDER BY created_at DESC',
-            [email],
-        );
-        return result.rows;
+    async function findByEmail(
+        email: string,
+        limit: number,
+        offset: number,
+    ): Promise<{ posts: Post[]; total: number }> {
+        const [dataResult, countResult] = await Promise.all([
+            pool.query('SELECT * FROM posts WHERE email = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3', [
+                email,
+                limit,
+                offset,
+            ]),
+            pool.query('SELECT count(*)::int AS total FROM posts WHERE email = $1', [email]),
+        ]);
+        return { posts: dataResult.rows, total: countResult.rows[0].total };
     }
 
     async function findById(id: number): Promise<Post | undefined> {

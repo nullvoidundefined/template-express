@@ -31,9 +31,10 @@ describe('posts repository', () => {
         it('returns empty array when user has no posts', async () => {
             await seedUser();
 
-            const posts = await postsRepo.findByEmail('user@test.com');
+            const { posts, total } = await postsRepo.findByEmail('user@test.com', 20, 0);
 
             expect(posts).toEqual([]);
+            expect(total).toBe(0);
         });
 
         it('returns posts in reverse chronological order', async () => {
@@ -41,7 +42,7 @@ describe('posts repository', () => {
             await postsRepo.createPost('user@test.com', 'First', 'Body');
             await postsRepo.createPost('user@test.com', 'Second', 'Body');
 
-            const posts = await postsRepo.findByEmail('user@test.com');
+            const { posts } = await postsRepo.findByEmail('user@test.com', 20, 0);
 
             expect(posts[0].title).toBe('Second');
             expect(posts[1].title).toBe('First');
@@ -53,10 +54,22 @@ describe('posts repository', () => {
             await postsRepo.createPost('a@test.com', 'A post', 'Body');
             await postsRepo.createPost('b@test.com', 'B post', 'Body');
 
-            const posts = await postsRepo.findByEmail('a@test.com');
+            const { posts } = await postsRepo.findByEmail('a@test.com', 20, 0);
 
             expect(posts).toHaveLength(1);
             expect(posts[0].title).toBe('A post');
+        });
+
+        it('respects limit and offset', async () => {
+            await seedUser();
+            await postsRepo.createPost('user@test.com', 'First', 'Body');
+            await postsRepo.createPost('user@test.com', 'Second', 'Body');
+            await postsRepo.createPost('user@test.com', 'Third', 'Body');
+
+            const { posts, total } = await postsRepo.findByEmail('user@test.com', 1, 1);
+
+            expect(posts).toHaveLength(1);
+            expect(total).toBe(3);
         });
     });
 

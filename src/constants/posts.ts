@@ -7,6 +7,8 @@ const POST = {
     },
     LIMITS: {
         BODY_MAX: 10_000,
+        PAGE_SIZE_DEFAULT: 20,
+        PAGE_SIZE_MAX: 100,
         TITLE_MAX: 255,
     },
 } as const;

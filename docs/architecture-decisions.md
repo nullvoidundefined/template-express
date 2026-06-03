@@ -53,3 +53,7 @@ CORS is configured via the `CORS_ORIGIN` environment variable (comma-separated f
 ## 013 - Session tokens hashed with SHA-256 before storage
 
 Raw session tokens (UUIDs) are sent to the client in cookies. Before any database operation (insert, lookup, delete), the token is hashed with SHA-256. The database only ever stores hashes. This means a database breach doesn't expose usable session tokens. SHA-256 is used instead of bcrypt because session tokens are random -- there's no dictionary to attack, so a fast hash is sufficient. The hashing happens in the helper/middleware/handler layers, not the repository, keeping the repository unaware of the hashing strategy.
+
+## 014 - Limit/offset pagination with total count
+
+`GET /posts` accepts `?limit=` and `?offset=` query parameters. Defaults to 20 per page, max 100. The response includes `total` so clients can calculate page count. The count and data queries run in parallel via `Promise.all` to avoid sequential round trips. Chosen over cursor-based pagination for simplicity -- limit/offset is sufficient when posts are scoped to a single user and total counts are small.

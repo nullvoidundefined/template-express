@@ -20,8 +20,9 @@ function createMockPostsRepo(): PostsRepo {
             posts.splice(index, 1);
             return true;
         },
-        async findByEmail(email: string) {
-            return posts.filter((p) => p.email === email);
+        async findByEmail(email: string, limit: number, offset: number) {
+            const filtered = posts.filter((p) => p.email === email);
+            return { posts: filtered.slice(offset, offset + limit), total: filtered.length };
         },
         async findById(id: number) {
             return posts.find((p) => p.id === id);
@@ -112,26 +113,49 @@ describe('posts handlers', () => {
 
     describe('list', () => {
         it('returns empty array when user has no posts', async () => {
-            const req = createMockReq({ email: 'user@test.com' });
+            const req = createMockReq({ email: 'user@test.com', query: {} });
             const res = createMockRes();
 
             await handlers.list(req, res);
 
-            expect(res._json).toEqual([]);
+            const result = res._json as { posts: Post[]; total: number };
+            expect(result.posts).toEqual([]);
+            expect(result.total).toBe(0);
         });
 
         it('returns only posts belonging to the user', async () => {
             await postsRepo.createPost('user@test.com', 'Mine', 'My post');
             await postsRepo.createPost('other@test.com', 'Theirs', 'Their post');
 
-            const req = createMockReq({ email: 'user@test.com' });
+            const req = createMockReq({ email: 'user@test.com', query: {} });
             const res = createMockRes();
 
             await handlers.list(req, res);
 
-            const posts = res._json as Post[];
-            expect(posts).toHaveLength(1);
-            expect(posts[0].title).toBe('Mine');
+            const result = res._json as { posts: Post[]; total: number };
+            expect(result.posts).toHaveLength(1);
+            expect(result.posts[0].title).toBe('Mine');
+            expect(result.total).toBe(1);
+        });
+
+        it('respects limit and offset query parameters', async () => {
+            await postsRepo.createPost('user@test.com', 'First', 'Body');
+            await postsRepo.createPost('user@test.com', 'Second', 'Body');
+            await postsRepo.createPost('user@test.com', 'Third', 'Body');
+
+            const req = createMockReq({
+                email: 'user@test.com',
+                query: { limit: '2', offset: '1' },
+            });
+            const res = createMockRes();
+
+            await handlers.list(req, res);
+
+            const result = res._json as { posts: Post[]; total: number; limit: number; offset: number };
+            expect(result.posts).toHaveLength(2);
+            expect(result.total).toBe(3);
+            expect(result.limit).toBe(2);
+            expect(result.offset).toBe(1);
         });
     });
 

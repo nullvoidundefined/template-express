@@ -5,6 +5,7 @@ function createMockReq(overrides: Partial<Request> = {}): Request {
         body: {},
         cookies: {},
         params: {},
+        query: {},
         ...overrides,
     } as Request;
 }
