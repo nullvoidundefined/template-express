@@ -58,6 +58,6 @@ Raw session tokens (UUIDs) are sent to the client in cookies. Before any databas
 
 `GET /posts` accepts `?limit=` and `?offset=` query parameters. Defaults to 20 per page, max 100. The response includes `total` so clients can calculate page count. The count and data queries run in parallel via `Promise.all` to avoid sequential round trips. Chosen over cursor-based pagination for simplicity -- limit/offset is sufficient when posts are scoped to a single user and total counts are small.
 
-## 015 - Session cleanup via setInterval, not external scheduler
+## 015 - Session cleanup via pg_cron, not application-level scheduler
 
-Expired sessions are deleted every hour via `setInterval` inside the server process. No cron job or external scheduler. The cleanup is fire-and-forget with a `.catch()` to log errors without crashing the server. Skipped in test environment. This is appropriate for a single-server app; multi-server deployments would use a dedicated worker or database-level scheduled job to avoid duplicate runs.
+Expired sessions are cleaned up hourly by a pg_cron job inside Postgres (`0 * * * *`). This replaces an earlier `setInterval` approach which had problems: it didn't run when the app was down, ran redundantly on every instance, and drifted from wall-clock time. pg_cron runs exactly once regardless of app instance count, survives app restarts, and keeps the cleanup lifecycle where the data lives. The migration uses a `DO` block with `EXCEPTION` handling so it silently skips on databases without pg_cron (e.g., local development).
