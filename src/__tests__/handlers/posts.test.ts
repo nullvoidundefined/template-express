@@ -1,0 +1,196 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { createPostsHandlers } from '../../handlers/posts.js';
+import type { Post, PostsRepo } from '../../repositories/posts.js';
+import { createMockReq, createMockRes } from '../helpers.js';
+
+let nextId = 1;
+
+function createMockPostsRepo(): PostsRepo {
+    const posts: Post[] = [];
+
+    return {
+        async createPost(email: string, title: string, body: string) {
+            const post: Post = { id: nextId++, email, title, body, created_at: new Date() };
+            posts.push(post);
+            return post;
+        },
+        async deletePost(id: number, email: string) {
+            const index = posts.findIndex((p) => p.id === id && p.email === email);
+            if (index === -1) return false;
+            posts.splice(index, 1);
+            return true;
+        },
+        async findByEmail(email: string) {
+            return posts.filter((p) => p.email === email);
+        },
+        async findById(id: number) {
+            return posts.find((p) => p.id === id);
+        },
+    };
+}
+
+describe('posts handlers', () => {
+    let postsRepo: PostsRepo;
+    let handlers: ReturnType<typeof createPostsHandlers>;
+
+    beforeEach(() => {
+        nextId = 1;
+        postsRepo = createMockPostsRepo();
+        handlers = createPostsHandlers(postsRepo);
+    });
+
+    describe('create', () => {
+        it('returns 400 when title is missing', async () => {
+            const req = createMockReq({ body: { body: 'content' }, email: 'user@test.com' });
+            const res = createMockRes();
+
+            await handlers.create(req, res);
+
+            expect(res._status).toBe(400);
+            expect(res._json).toEqual({ error: 'Title and body required' });
+        });
+
+        it('returns 400 when body is missing', async () => {
+            const req = createMockReq({ body: { title: 'Title' }, email: 'user@test.com' });
+            const res = createMockRes();
+
+            await handlers.create(req, res);
+
+            expect(res._status).toBe(400);
+        });
+
+        it('returns 400 when title is too long', async () => {
+            const req = createMockReq({
+                body: { title: 'a'.repeat(256), body: 'content' },
+                email: 'user@test.com',
+            });
+            const res = createMockRes();
+
+            await handlers.create(req, res);
+
+            expect(res._status).toBe(400);
+            expect(res._json).toEqual({ error: 'Title must be 255 characters or less' });
+        });
+
+        it('returns 400 when body is too long', async () => {
+            const req = createMockReq({
+                body: { title: 'Title', body: 'a'.repeat(10_001) },
+                email: 'user@test.com',
+            });
+            const res = createMockRes();
+
+            await handlers.create(req, res);
+
+            expect(res._status).toBe(400);
+            expect(res._json).toEqual({ error: 'Body must be 10,000 characters or less' });
+        });
+
+        it('returns 201 with post on success', async () => {
+            const req = createMockReq({
+                body: { title: 'Hello', body: 'World' },
+                email: 'user@test.com',
+            });
+            const res = createMockRes();
+
+            await handlers.create(req, res);
+
+            expect(res._status).toBe(201);
+            expect(res._json).toMatchObject({
+                title: 'Hello',
+                body: 'World',
+                email: 'user@test.com',
+            });
+        });
+    });
+
+    describe('list', () => {
+        it('returns empty array when user has no posts', async () => {
+            const req = createMockReq({ email: 'user@test.com' });
+            const res = createMockRes();
+
+            await handlers.list(req, res);
+
+            expect(res._json).toEqual([]);
+        });
+
+        it('returns only posts belonging to the user', async () => {
+            await postsRepo.createPost('user@test.com', 'Mine', 'My post');
+            await postsRepo.createPost('other@test.com', 'Theirs', 'Their post');
+
+            const req = createMockReq({ email: 'user@test.com' });
+            const res = createMockRes();
+
+            await handlers.list(req, res);
+
+            const posts = res._json as Post[];
+            expect(posts).toHaveLength(1);
+            expect(posts[0].title).toBe('Mine');
+        });
+    });
+
+    describe('show', () => {
+        it('returns 404 when post does not exist', async () => {
+            const req = createMockReq({ params: { id: '999' }, email: 'user@test.com' });
+            const res = createMockRes();
+
+            await handlers.show(req, res);
+
+            expect(res._status).toBe(404);
+        });
+
+        it('returns 404 when post belongs to another user', async () => {
+            await postsRepo.createPost('other@test.com', 'Title', 'Body');
+
+            const req = createMockReq({ params: { id: '1' }, email: 'user@test.com' });
+            const res = createMockRes();
+
+            await handlers.show(req, res);
+
+            expect(res._status).toBe(404);
+        });
+
+        it('returns the post when it belongs to the user', async () => {
+            await postsRepo.createPost('user@test.com', 'My Post', 'Content');
+
+            const req = createMockReq({ params: { id: '1' }, email: 'user@test.com' });
+            const res = createMockRes();
+
+            await handlers.show(req, res);
+
+            expect(res._json).toMatchObject({ title: 'My Post', email: 'user@test.com' });
+        });
+    });
+
+    describe('remove', () => {
+        it('returns 404 when post does not exist', async () => {
+            const req = createMockReq({ params: { id: '999' }, email: 'user@test.com' });
+            const res = createMockRes();
+
+            await handlers.remove(req, res);
+
+            expect(res._status).toBe(404);
+        });
+
+        it('returns 404 when trying to delete another users post', async () => {
+            await postsRepo.createPost('other@test.com', 'Title', 'Body');
+
+            const req = createMockReq({ params: { id: '1' }, email: 'user@test.com' });
+            const res = createMockRes();
+
+            await handlers.remove(req, res);
+
+            expect(res._status).toBe(404);
+        });
+
+        it('deletes the post and returns success message', async () => {
+            await postsRepo.createPost('user@test.com', 'Title', 'Body');
+
+            const req = createMockReq({ params: { id: '1' }, email: 'user@test.com' });
+            const res = createMockRes();
+
+            await handlers.remove(req, res);
+
+            expect(res._json).toEqual({ message: 'Post deleted' });
+        });
+    });
+});
