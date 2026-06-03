@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { AUTH } from '../constants/auth.js';
 import { HTTP } from '../constants/http.js';
 import type { AuthHelper } from '../helpers/auth.js';
+import { hashToken } from '../helpers/hash.js';
 import type { SessionsRepo } from '../repositories/sessions.js';
 import type { UsersRepo } from '../repositories/users.js';
 
@@ -38,9 +39,9 @@ function createAuthHandlers({ authHelper, sessionsRepo, usersRepo }: AuthHandler
     async function logout(req: Request, res: Response) {
         const token = req.cookies[AUTH.COOKIE_NAME];
 
-        // Remove session from database if one exists
+        // Hash the raw token before deleting from the database
         if (token) {
-            await sessionsRepo.deleteSession(token);
+            await sessionsRepo.deleteSession(hashToken(token));
         }
 
         res.clearCookie(AUTH.COOKIE_NAME);

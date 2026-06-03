@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { hashToken } from '../../helpers/hash.js';
 import { createRequireAuth } from '../../middleware/requireAuth.js';
 import type { SessionsRepo } from '../../repositories/sessions.js';
 import { createMockReq, createMockRes } from '../helpers.js';
@@ -51,7 +52,8 @@ describe('requireAuth middleware', () => {
     });
 
     it('sets req.email and calls next on valid session', async () => {
-        const tokens = new Map([['valid-token', 'user@test.com']]);
+        // Mock stores the hashed token since middleware hashes before lookup
+        const tokens = new Map([[hashToken('valid-token'), 'user@test.com']]);
         sessionsRepo = createMockSessionsRepo(tokens);
         requireAuth = createRequireAuth(sessionsRepo);
 

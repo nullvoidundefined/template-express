@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { AUTH } from '../constants/auth.js';
 import { HTTP } from '../constants/http.js';
+import { hashToken } from '../helpers/hash.js';
 import type { SessionsRepo } from '../repositories/sessions.js';
 
 function createRequireAuth(sessionsRepo: SessionsRepo) {
@@ -13,8 +14,8 @@ function createRequireAuth(sessionsRepo: SessionsRepo) {
             return;
         }
 
-        // Validate token against database and check TTL
-        const email = await sessionsRepo.findSession(token);
+        // Hash the raw token before looking it up in the database
+        const email = await sessionsRepo.findSession(hashToken(token));
         if (!email) {
             res.clearCookie(AUTH.COOKIE_NAME);
             res.status(HTTP.STATUS.UNAUTHORIZED).json({ error: 'Session expired' });

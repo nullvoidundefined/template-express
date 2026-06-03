@@ -2,11 +2,13 @@ import type { Response } from 'express';
 import crypto from 'node:crypto';
 import { AUTH } from '../constants/auth.js';
 import type { SessionsRepo } from '../repositories/sessions.js';
+import { hashToken } from './hash.js';
 
 function createAuthHelper(sessionsRepo: SessionsRepo) {
     async function createSession(res: Response, email: string) {
         const token = crypto.randomUUID();
-        await sessionsRepo.createSession(token, email);
+        // Store the hash in the database, send the raw token to the client
+        await sessionsRepo.createSession(hashToken(token), email);
         res.cookie(AUTH.COOKIE_NAME, token, { httpOnly: true, sameSite: 'lax' });
     }
 

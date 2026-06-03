@@ -49,3 +49,7 @@ Express's default error handler returns an HTML page. Since this is a JSON API, 
 ## 012 - CORS with explicit origin allowlist and credentials
 
 CORS is configured via the `CORS_ORIGIN` environment variable (comma-separated for multiple origins). Defaults to `http://localhost:3000` for local frontend development. `credentials: true` is required because we use cookies for authentication -- without it browsers won't send cookies cross-origin. The origin is not set to `*` because wildcard origins are incompatible with `credentials: true` and would allow any website to make authenticated requests.
+
+## 013 - Session tokens hashed with SHA-256 before storage
+
+Raw session tokens (UUIDs) are sent to the client in cookies. Before any database operation (insert, lookup, delete), the token is hashed with SHA-256. The database only ever stores hashes. This means a database breach doesn't expose usable session tokens. SHA-256 is used instead of bcrypt because session tokens are random -- there's no dictionary to attack, so a fast hash is sufficient. The hashing happens in the helper/middleware/handler layers, not the repository, keeping the repository unaware of the hashing strategy.
