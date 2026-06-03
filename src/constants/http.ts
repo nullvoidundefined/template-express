@@ -13,6 +13,7 @@ const HTTP = {
         CREATED: 201,
         INTERNAL_SERVER_ERROR: 500,
         NOT_FOUND: 404,
+        SERVICE_UNAVAILABLE: 503,
         TOO_MANY_REQUESTS: 429,
         UNAUTHORIZED: 401,
     },

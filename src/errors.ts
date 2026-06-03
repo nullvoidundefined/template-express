@@ -4,6 +4,8 @@ const ERROR_CODES = {
     AUTH_REQUIRED: 'AUTH_REQUIRED',
     // Auth: duplicate email on registration
     EMAIL_ALREADY_REGISTERED: 'EMAIL_ALREADY_REGISTERED',
+    // Server: database connection or query failed -- client should retry later
+    DATABASE_UNAVAILABLE: 'DATABASE_UNAVAILABLE',
     // Server: unhandled error in a handler or middleware
     INTERNAL_ERROR: 'INTERNAL_ERROR',
     // Auth: wrong email or password on login

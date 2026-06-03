@@ -135,3 +135,7 @@ All environment variables are read and validated once in `src/config.ts` using a
 ## 033 - Idempotency keys for safe POST/PUT retries
 
 Clients can send an `Idempotency-Key` header on POST and PUT requests. The server stores the key (scoped to the authenticated user) along with the response status code and body. If the same key is sent again within 24 hours, the stored response is replayed without re-executing the handler. Keys expire after 24 hours. This prevents duplicate resource creation when clients retry after a timeout. The middleware intercepts `res.json` to capture the response transparently -- handlers don't need to know about idempotency. GET and DELETE are naturally idempotent and pass through unchanged. Requests without the header also pass through unchanged -- the feature is opt-in for clients.
+
+## 034 - Database errors return 503, not 500
+
+The error handler distinguishes database connectivity errors from application bugs. Connection failures (`ECONNREFUSED`, `ENOTFOUND`, `ETIMEDOUT`) and Postgres server-side errors (`08000` connection exception family, `57P01` admin shutdown, `57P03` cannot connect) return `503 Service Unavailable` with error code `DATABASE_UNAVAILABLE`. All other unhandled errors return `500 Internal Server Error` with `INTERNAL_ERROR`. The 503 signals to clients and load balancers that the failure is transient and the request should be retried, while 500 signals a code-level bug that won't resolve on retry.
