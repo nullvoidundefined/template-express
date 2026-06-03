@@ -61,6 +61,34 @@ app.use((_req, res) => {
 // Global error handler -- must be after all routes
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     logger.info(`Server running on port ${PORT}`);
 });
+
+function gracefulShutdown(signal: string) {
+    logger.info(`${signal} received -- shutting down`);
+
+    // Force exit if shutdown takes too long
+    const forceExit = setTimeout(() => {
+        logger.error('Shutdown timed out -- forcing exit');
+        process.exit(1);
+    }, HTTP.GRACEFUL_SHUTDOWN_TIMEOUT_MS);
+
+    // Stop accepting new connections, wait for in-flight requests to finish
+    server.close(async () => {
+        logger.info('HTTP server closed');
+
+        try {
+            await pool.end();
+            logger.info('Database pool closed');
+        } catch (err) {
+            logger.error(err, 'Error closing database pool');
+        }
+
+        clearTimeout(forceExit);
+        process.exit(0);
+    });
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));

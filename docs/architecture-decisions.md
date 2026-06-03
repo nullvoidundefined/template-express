@@ -67,3 +67,7 @@ Expired sessions are cleaned up hourly by a pg_cron job inside Postgres (`0 * * 
 ## 016 - Pino for structured request logging
 
 Using pino + pino-http over Winston or Morgan. Pino outputs structured JSON (one line per entry, parseable by log aggregators) and is significantly faster due to async serialization. pino-http automatically logs method, URL, status code, and response time for every request. In development, pino-pretty formats output for readability. In test, the logger is silenced entirely (`level: 'silent'`). The error handler uses the same pino logger instance instead of `console.error` for consistent log format.
+
+## 017 - Graceful shutdown on SIGTERM/SIGINT
+
+On termination signals, the server stops accepting new connections, waits for in-flight requests to complete, closes the database pool, then exits with code 0. A 10-second timeout forces exit if draining takes too long, preventing stuck requests from blocking deploys. Both SIGTERM (process managers) and SIGINT (Ctrl+C) are handled. The shutdown sequence is logged at each step for observability.
