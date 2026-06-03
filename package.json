@@ -1,0 +1,29 @@
+{
+    "dependencies": {
+        "bcryptjs": "^3.0.3",
+        "cookie-parser": "^1.4.7",
+        "express": "^5.1.0",
+        "pg": "^8.21.0"
+    },
+    "devDependencies": {
+        "@types/bcryptjs": "^2.4.6",
+        "@types/cookie-parser": "^1.4.10",
+        "@types/express": "^5.0.2",
+        "@types/node": "^22.15.21",
+        "@types/pg": "^8.20.0",
+        "prettier": "^3.5.3",
+        "tsx": "^4.19.4",
+        "typescript": "^5.8.3"
+    },
+    "name": "demo-express",
+    "private": true,
+    "scripts": {
+        "build": "tsc",
+        "db:migrate": "tsx src/migrate.ts",
+        "dev": "tsx watch src/server.ts",
+        "format": "prettier --write .",
+        "start": "node dist/server.js"
+    },
+    "type": "module",
+    "version": "1.0.0"
+}
