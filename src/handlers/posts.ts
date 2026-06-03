@@ -4,6 +4,16 @@ import { POST } from '../constants/posts.js';
 import type { PostsRepo } from '../repositories/posts.js';
 
 function createPostsHandlers(postsRepo: PostsRepo) {
+    // Parses and validates the :id param, returns null and sends 400 if invalid
+    function parseId(req: Request, res: Response): number | null {
+        const id = Number(req.params.id);
+        if (!Number.isInteger(id) || id <= 0) {
+            res.status(HTTP.STATUS.BAD_REQUEST).json({ error: POST.ERRORS.INVALID_ID });
+            return null;
+        }
+        return id;
+    }
+
     async function create(req: Request, res: Response) {
         const { title, body } = req.body;
 
@@ -42,7 +52,8 @@ function createPostsHandlers(postsRepo: PostsRepo) {
     }
 
     async function remove(req: Request, res: Response) {
-        const id = Number(req.params.id);
+        const id = parseId(req, res);
+        if (id === null) return;
 
         // Only delete if the post belongs to the authenticated user
         const deleted = await postsRepo.deletePost(id, req.email!);
@@ -54,8 +65,25 @@ function createPostsHandlers(postsRepo: PostsRepo) {
         res.json({ message: 'Post deleted' });
     }
 
+    async function show(req: Request, res: Response) {
+        const id = parseId(req, res);
+        if (id === null) return;
+
+        const post = await postsRepo.findById(id);
+
+        // Only show posts belonging to the authenticated user
+        if (!post || post.email !== req.email) {
+            res.status(HTTP.STATUS.NOT_FOUND).json({ error: POST.ERRORS.NOT_FOUND });
+            return;
+        }
+
+        res.json(post);
+    }
+
     async function update(req: Request, res: Response) {
-        const id = Number(req.params.id);
+        const id = parseId(req, res);
+        if (id === null) return;
+
         const { title, body } = req.body;
 
         // Validate required fields
@@ -79,19 +107,6 @@ function createPostsHandlers(postsRepo: PostsRepo) {
         // Only update if the post belongs to the authenticated user
         const post = await postsRepo.updatePost(id, req.email!, title, body);
         if (!post) {
-            res.status(HTTP.STATUS.NOT_FOUND).json({ error: POST.ERRORS.NOT_FOUND });
-            return;
-        }
-
-        res.json(post);
-    }
-
-    async function show(req: Request, res: Response) {
-        const id = Number(req.params.id);
-        const post = await postsRepo.findById(id);
-
-        // Only show posts belonging to the authenticated user
-        if (!post || post.email !== req.email) {
             res.status(HTTP.STATUS.NOT_FOUND).json({ error: POST.ERRORS.NOT_FOUND });
             return;
         }
