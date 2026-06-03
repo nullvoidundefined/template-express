@@ -15,6 +15,11 @@ interface AuthHandlerDeps {
 }
 
 function createAuthHandlers({ authHelper, sessionsRepo, usersRepo }: AuthHandlerDeps) {
+    // Returns the authenticated user's identity from an existing session
+    function me(req: Request, res: Response) {
+        res.json({ email: req.email });
+    }
+
     async function login(req: Request, res: Response) {
         const { email, password } = req.body;
 
@@ -60,7 +65,7 @@ function createAuthHandlers({ authHelper, sessionsRepo, usersRepo }: AuthHandler
         res.status(HTTP.STATUS.CREATED).json({ email });
     }
 
-    return { login, logout, register };
+    return { login, logout, me, register };
 }
 
 export { createAuthHandlers };

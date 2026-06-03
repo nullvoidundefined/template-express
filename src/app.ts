@@ -70,9 +70,9 @@ function createApp(pool: Pool) {
     const v1 = Router();
     // Skip auth rate limiter in test environment (same reason as generalLimiter above)
     if (!config.isTest) {
-        v1.use('/auth', authLimiter, createAuthRouter(authHandlers));
+        v1.use('/auth', authLimiter, createAuthRouter(authHandlers, requireAuth));
     } else {
-        v1.use('/auth', createAuthRouter(authHandlers));
+        v1.use('/auth', createAuthRouter(authHandlers, requireAuth));
     }
     v1.use('/health', healthRouter);
     v1.use('/posts', createPostsRouter(postsHandlers, requireAuth, idempotency));

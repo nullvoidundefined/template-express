@@ -49,6 +49,17 @@ describe('auth handlers', () => {
         handlers = createAuthHandlers({ authHelper, sessionsRepo, usersRepo });
     });
 
+    describe('me', () => {
+        it('returns the authenticated email', async () => {
+            const req = createMockReq({ email: 'user@test.com' });
+            const res = createMockRes();
+
+            handlers.me(req, res);
+
+            expect(res._json).toEqual({ email: 'user@test.com' });
+        });
+    });
+
     describe('register', () => {
         it('returns 409 when email is already registered', async () => {
             const users = new Map([['taken@test.com', 'hash']]);
