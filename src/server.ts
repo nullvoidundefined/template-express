@@ -37,6 +37,12 @@ app.use(helmet());
 // Request logging -- before all middleware so every request is captured
 app.use(httpLogger);
 
+// Return the request ID to the client for traceability
+app.use((req, res, next) => {
+    res.setHeader('X-Request-Id', req.id as string);
+    next();
+});
+
 // CORS must be before routes to handle preflight OPTIONS requests
 app.use(createCorsMiddleware());
 

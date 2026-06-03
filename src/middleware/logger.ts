@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import pino from 'pino';
 import { pinoHttp } from 'pino-http';
@@ -15,6 +16,10 @@ const logger = pino({
 // Custom serializers to keep logs concise -- only log what's useful for debugging
 const httpLogger = pinoHttp({
     logger,
+    // Reuse the client's request ID if present, otherwise generate one
+    genReqId: (req) => {
+        return (req.headers['x-request-id'] as string) || crypto.randomUUID();
+    },
     serializers: {
         req(req: IncomingMessage) {
             return {

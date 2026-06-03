@@ -115,3 +115,7 @@ The server exits immediately with a clear error message if `DATABASE_URL` or `CO
 ## 028 - Zod schemas as single source of truth for validation and types
 
 Input validation moved from hand-written if-checks in handlers to Zod schemas in `src/schemas/`. Schemas encode constraints (required, min/max length, format, coercion) declaratively. TypeScript types are derived from schemas via `z.infer`, eliminating drift between validation and types. A reusable `validate` middleware in the routes layer runs the schema before the handler, so handlers contain only business logic. Validation-specific error messages and limits that were previously in constants files now live in the schemas. Constants files retain only non-validation values (cookie name, bcrypt rounds, session TTL, HTTP status codes, business-logic error messages like "Post not found").
+
+## 029 - Request ID propagation for end-to-end traceability
+
+Every request gets a UUID assigned by pino-http's `genReqId`. If the client or load balancer sends an `X-Request-Id` header, the server reuses it instead of generating a new one. The ID is included in every log line for that request (via pino-http's child logger), returned to the client in the `X-Request-Id` response header, and used by the error handler via `req.log` instead of the global logger. This lets you grep for a single ID and see the complete lifecycle of a request, and lets clients report the ID in bug reports for server-side debugging.
