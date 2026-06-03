@@ -9,7 +9,12 @@ function createAuthHelper(sessionsRepo: SessionsRepo) {
         const token = crypto.randomUUID();
         // Store the hash in the database, send the raw token to the client
         await sessionsRepo.createSession(hashToken(token), email);
-        res.cookie(AUTH.COOKIE_NAME, token, { httpOnly: true, sameSite: 'lax' });
+        // secure: true in production prevents cookies from being sent over plain HTTP
+        res.cookie(AUTH.COOKIE_NAME, token, {
+            httpOnly: true,
+            sameSite: 'lax',
+            secure: process.env.NODE_ENV === 'production',
+        });
     }
 
     return { createSession };
