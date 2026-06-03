@@ -1,5 +1,5 @@
 import type { Pool } from 'pg';
-import express from 'express';
+import express, { Router } from 'express';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { config } from './config.js';
@@ -62,14 +62,20 @@ function createApp(pool: Pool) {
     const authHandlers = createAuthHandlers({ authHelper, sessionsRepo, usersRepo });
     const postsHandlers = createPostsHandlers(postsRepo);
 
-    // Mount route groups -- auth gets a stricter rate limit in non-test environments
+    // Health at root level for load balancers that probe /health directly
+    const healthRouter = createHealthRouter(pool);
+    app.use('/health', healthRouter);
+
+    // Group all API routes under /v1
+    const v1 = Router();
     if (!config.isTest) {
-        app.use('/auth', authLimiter, createAuthRouter(authHandlers));
+        v1.use('/auth', authLimiter, createAuthRouter(authHandlers));
     } else {
-        app.use('/auth', createAuthRouter(authHandlers));
+        v1.use('/auth', createAuthRouter(authHandlers));
     }
-    app.use('/health', createHealthRouter(pool));
-    app.use('/posts', createPostsRouter(postsHandlers, requireAuth, idempotency));
+    v1.use('/health', healthRouter);
+    v1.use('/posts', createPostsRouter(postsHandlers, requireAuth, idempotency));
+    app.use('/v1', v1);
 
     // Catch unmatched routes
     app.use((_req, res) => {

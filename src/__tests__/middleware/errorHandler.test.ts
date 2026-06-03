@@ -5,7 +5,7 @@ import { createMockReq, createMockRes } from '../helpers.js';
 // pino-http attaches req.log -- mock it for unit tests
 function createReqWithLog(overrides: Record<string, unknown> = {}) {
     const req = createMockReq(overrides);
-    (req as Record<string, unknown>).log = { error: () => {} };
+    (req as unknown as Record<string, unknown>).log = { error: () => {} };
     return req;
 }
 

@@ -139,3 +139,7 @@ Clients can send an `Idempotency-Key` header on POST and PUT requests. The serve
 ## 034 - Database errors return 503, not 500
 
 The error handler distinguishes database connectivity errors from application bugs. Connection failures (`ECONNREFUSED`, `ENOTFOUND`, `ETIMEDOUT`) and Postgres server-side errors (`08000` connection exception family, `57P01` admin shutdown, `57P03` cannot connect) return `503 Service Unavailable` with error code `DATABASE_UNAVAILABLE`. All other unhandled errors return `500 Internal Server Error` with `INTERNAL_ERROR`. The 503 signals to clients and load balancers that the failure is transient and the request should be retried, while 500 signals a code-level bug that won't resolve on retry.
+
+## 035 - URL-prefix API versioning (/v1/)
+
+All API routes are grouped under `/v1/` (`/v1/auth/*`, `/v1/posts/*`, `/v1/health`). URL prefix was chosen over header-based or query-parameter versioning because it's visible in logs, cacheable, easy to route at the load balancer level, and trivial to test with curl. Health is also mounted at the root (`/health`) for load balancers that probe a fixed path. When the API needs breaking changes, `/v2/` routes can be added alongside `/v1/` and clients migrate on their own timeline. The versioned router is a standard Express `Router` mounted on the app with `app.use('/v1', v1)`.
