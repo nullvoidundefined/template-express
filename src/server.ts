@@ -18,7 +18,7 @@ import healthRouter from './routes/health.js';
 import { createPostsRouter } from './routes/posts.js';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || HTTP.DEFAULT_PORT;
 
 // Request logging -- before all middleware so every request is captured
 app.use(httpLogger);
