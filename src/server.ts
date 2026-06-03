@@ -27,7 +27,7 @@ app.use(httpLogger);
 app.use(createCorsMiddleware());
 
 // Parse JSON bodies and cookies for all routes
-app.use(express.json({ limit: HTTP.BODY_LIMIT }));
+app.use(express.json({ limit: HTTP.JSON_BODY_SIZE_LIMIT }));
 app.use(cookieParser());
 
 // Skip rate limiting in test environment

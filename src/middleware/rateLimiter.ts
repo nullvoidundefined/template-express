@@ -3,7 +3,7 @@ import { HTTP } from '../constants/http.js';
 
 // Strict limiter for auth routes to prevent brute-force attacks
 const authLimiter = rateLimit({
-    max: HTTP.RATE_LIMIT.AUTH_MAX,
+    max: HTTP.RATE_LIMIT.AUTH_REQUESTS_PER_WINDOW,
     message: { error: 'Too many requests, please try again later' },
     standardHeaders: true,
     windowMs: HTTP.RATE_LIMIT.AUTH_WINDOW_MS,
@@ -11,7 +11,7 @@ const authLimiter = rateLimit({
 
 // General limiter for all other routes to prevent API abuse
 const generalLimiter = rateLimit({
-    max: HTTP.RATE_LIMIT.GENERAL_MAX,
+    max: HTTP.RATE_LIMIT.GENERAL_REQUESTS_PER_WINDOW,
     message: { error: 'Too many requests, please try again later' },
     standardHeaders: true,
     windowMs: HTTP.RATE_LIMIT.GENERAL_WINDOW_MS,
