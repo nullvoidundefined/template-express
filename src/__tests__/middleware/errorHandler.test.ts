@@ -17,7 +17,7 @@ describe('errorHandler', () => {
         errorHandler(new Error('something broke'), req, res, () => {});
 
         expect(res._status).toBe(500);
-        expect(res._json).toEqual({ code: 'INTERNAL_ERROR', error: 'Internal server error' });
+        expect(res._json).toEqual({ code: 'SERVER_INTERNAL_ERROR', error: 'Internal server error' });
     });
 
     it('returns 503 for ECONNREFUSED (database connection refused)', () => {
@@ -29,7 +29,7 @@ describe('errorHandler', () => {
 
         expect(res._status).toBe(503);
         expect(res._json).toEqual({
-            code: 'DATABASE_UNAVAILABLE',
+            code: 'SERVER_DATABASE_UNAVAILABLE',
             error: 'Service temporarily unavailable',
         });
     });
@@ -43,7 +43,7 @@ describe('errorHandler', () => {
 
         expect(res._status).toBe(503);
         expect(res._json).toEqual({
-            code: 'DATABASE_UNAVAILABLE',
+            code: 'SERVER_DATABASE_UNAVAILABLE',
             error: 'Service temporarily unavailable',
         });
     });

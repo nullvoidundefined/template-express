@@ -46,7 +46,7 @@ describe('requireAuth middleware', () => {
         });
 
         expect(res._status).toBe(401);
-        expect(res._json).toEqual({ code: 'SESSION_EXPIRED', error: 'Session expired' });
+        expect(res._json).toEqual({ code: 'AUTH_SESSION_EXPIRED', error: 'Session expired' });
         expect(res._clearedCookies).toContain('session');
         expect(nextCalled).toBe(false);
     });

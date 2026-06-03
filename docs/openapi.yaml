@@ -18,16 +18,16 @@ components:
           type: string
           description: Machine-readable error code for programmatic handling.
           enum:
+            - AUTH_EMAIL_ALREADY_REGISTERED
+            - AUTH_INVALID_CREDENTIALS
             - AUTH_REQUIRED
-            - DATABASE_UNAVAILABLE
-            - EMAIL_ALREADY_REGISTERED
-            - INTERNAL_ERROR
-            - INVALID_CREDENTIALS
-            - NOT_FOUND
-            - POST_NOT_FOUND
-            - RATE_LIMITED
-            - SESSION_EXPIRED
-            - VALIDATION_ERROR
+            - AUTH_SESSION_EXPIRED
+            - INPUT_VALIDATION_ERROR
+            - POSTS_NOT_FOUND
+            - RATE_LIMIT_EXCEEDED
+            - ROUTING_NOT_FOUND
+            - SERVER_DATABASE_UNAVAILABLE
+            - SERVER_INTERNAL_ERROR
         error:
           type: string
           description: Human-readable error message for display.
