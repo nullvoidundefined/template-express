@@ -83,3 +83,31 @@ A three-argument middleware after all routes catches unmatched URLs and returns 
 ## 020 - hashToken utility in helpers, not repositories
 
 The `hashToken` function lives in `helpers/hash.ts` and is called by the auth helper, middleware, and handler -- the layers that bridge the raw cookie token and the database. Repositories are unaware of hashing and store/query whatever string they receive. This means the hashing strategy can be changed in one place without touching the data access layer.
+
+## 021 - Migration transactions use dedicated client, not pool.query
+
+`pool.query()` acquires a different connection for each call. BEGIN/COMMIT/ROLLBACK on separate connections do not form a transaction. The migration runner uses `pool.connect()` to acquire a single client and runs all statements through it, ensuring atomicity. A failed migration rolls back completely instead of leaving a partially-applied schema.
+
+## 022 - Health endpoint checks database connectivity
+
+The `/health` endpoint runs `SELECT 1` against the pool. If the database is unreachable, it returns 500 with `{"status": "error"}` instead of a false-positive 200. Load balancers and Railway health checks use this endpoint to detect unhealthy instances and route traffic away.
+
+## 023 - Helmet for security response headers
+
+Helmet adds baseline security headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options`, `Referrer-Policy`, etc.) with a single middleware call. Mounted before all routes so every response includes the headers, including error responses.
+
+## 024 - Session cleanup fallback on startup
+
+`deleteExpiredSessions` runs once on server startup as a fallback for environments without pg_cron (local dev, managed Postgres tiers without the extension). This ensures stale sessions are cleaned even if the pg_cron job never runs. The startup cleanup is fire-and-forget; failure is logged but does not prevent the server from starting.
+
+## 025 - Explicit column lists instead of SELECT *
+
+Posts queries use a shared `POST_COLUMNS` constant instead of `SELECT *`. This prevents future columns (internal flags, soft-delete markers) from leaking to API consumers automatically, and makes the returned shape explicit and grep-able.
+
+## 026 - SSL and connection limits for managed Postgres
+
+The pool uses `ssl: { rejectUnauthorized: false }` in production because Neon and Railway require SSL connections. Connection max is set to 5 in production to stay within free-tier limits. Local dev uses no SSL and the default pool size of 10.
+
+## 027 - Startup env validation in production
+
+The server exits immediately with a clear error message if `DATABASE_URL` or `CORS_ORIGIN` are missing in production. This catches misconfigured deploys at boot time instead of at first request, when the error surfaces as a confusing connection refused or CORS block.
