@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const configSchema = z.object({
     corsOrigin: z.string().default('http://localhost:3000'),
-    databaseUrl: z.string().default('postgresql://localhost:5432/demo_express'),
+    databaseUrl: z.string().default('postgresql://localhost:5432/template_express'),
     isProduction: z.boolean(),
     isTest: z.boolean(),
     nodeEnv: z.enum(['development', 'production', 'test']).default('development'),

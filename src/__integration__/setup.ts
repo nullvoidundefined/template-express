@@ -6,15 +6,30 @@ import { beforeAll, afterAll, beforeEach } from 'vitest';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = path.join(__dirname, '..', 'migrations');
-const TEST_DB = 'demo_express_test';
-const TEST_URL = `postgresql://localhost:5432/${TEST_DB}`;
+const TEST_DB = 'template_express_test';
+
+// In CI, DATABASE_URL points at the service container (with credentials).
+// Locally, default to passwordless localhost.
+const baseUrl = process.env.DATABASE_URL
+    ? new URL(process.env.DATABASE_URL)
+    : new URL('postgresql://localhost:5432/postgres');
+const TEST_URL = (() => {
+    const u = new URL(baseUrl.toString());
+    u.pathname = `/${TEST_DB}`;
+    return u.toString();
+})();
+const ADMIN_URL = (() => {
+    const u = new URL(baseUrl.toString());
+    u.pathname = '/postgres';
+    return u.toString();
+})();
 
 // Shared test pool -- imported by test files
 export const testPool = new pg.Pool({ connectionString: TEST_URL });
 
 beforeAll(async () => {
     // Create test database if it doesn't exist
-    const adminPool = new pg.Pool({ connectionString: 'postgresql://localhost:5432/postgres' });
+    const adminPool = new pg.Pool({ connectionString: ADMIN_URL });
     try {
         const exists = await adminPool.query('SELECT 1 FROM pg_database WHERE datname = $1', [
             TEST_DB,
