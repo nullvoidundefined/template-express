@@ -10,9 +10,11 @@ import { createPostsHandlers } from './handlers/posts.js';
 import { createAuthHelper } from './helpers/auth.js';
 import { createCorsMiddleware } from './middleware/cors.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { createIdempotencyMiddleware } from './middleware/idempotency.js';
 import { httpLogger } from './middleware/logger.js';
 import { authLimiter, generalLimiter } from './middleware/rateLimiter.js';
 import { createRequireAuth } from './middleware/requireAuth.js';
+import { createIdempotencyRepo } from './repositories/idempotency.js';
 import { createPostsRepo } from './repositories/posts.js';
 import { createSessionsRepo } from './repositories/sessions.js';
 import { createUsersRepo } from './repositories/users.js';
@@ -53,8 +55,10 @@ function createApp(pool: Pool) {
     const sessionsRepo = createSessionsRepo(pool);
     const usersRepo = createUsersRepo(pool);
     const postsRepo = createPostsRepo(pool);
+    const idempotencyRepo = createIdempotencyRepo(pool);
     const authHelper = createAuthHelper(sessionsRepo);
     const requireAuth = createRequireAuth(sessionsRepo);
+    const idempotency = createIdempotencyMiddleware(idempotencyRepo);
     const authHandlers = createAuthHandlers({ authHelper, sessionsRepo, usersRepo });
     const postsHandlers = createPostsHandlers(postsRepo);
 
@@ -65,7 +69,7 @@ function createApp(pool: Pool) {
         app.use('/auth', createAuthRouter(authHandlers));
     }
     app.use('/health', createHealthRouter(pool));
-    app.use('/posts', createPostsRouter(postsHandlers, requireAuth));
+    app.use('/posts', createPostsRouter(postsHandlers, requireAuth, idempotency));
 
     // Catch unmatched routes
     app.use((_req, res) => {

@@ -131,3 +131,7 @@ Every error response includes both a `code` (machine-readable, e.g. `VALIDATION_
 ## 032 - Centralized config module with Zod validation
 
 All environment variables are read and validated once in `src/config.ts` using a Zod schema. The rest of the codebase imports `config` and reads typed properties (`config.port`, `config.isProduction`, `config.databaseUrl`) instead of reaching into `process.env` directly. No `process.env` reads exist outside of `config.ts`. Production-required variables (`DATABASE_URL`, `CORS_ORIGIN`) are enforced at startup with a clear error message. Defaults are only applied in non-production environments. This gives one place to see every env var the app needs, type-safe access everywhere, and startup-time validation instead of first-request-time failures.
+
+## 033 - Idempotency keys for safe POST/PUT retries
+
+Clients can send an `Idempotency-Key` header on POST and PUT requests. The server stores the key (scoped to the authenticated user) along with the response status code and body. If the same key is sent again within 24 hours, the stored response is replayed without re-executing the handler. Keys expire after 24 hours. This prevents duplicate resource creation when clients retry after a timeout. The middleware intercepts `res.json` to capture the response transparently -- handlers don't need to know about idempotency. GET and DELETE are naturally idempotent and pass through unchanged. Requests without the header also pass through unchanged -- the feature is opt-in for clients.

@@ -9,11 +9,18 @@ import {
     updatePostSchema,
 } from '../schemas/posts.js';
 
-function createPostsRouter(handlers: PostsHandlers, requireAuth: RequestHandler) {
+function createPostsRouter(
+    handlers: PostsHandlers,
+    requireAuth: RequestHandler,
+    idempotency: RequestHandler,
+) {
     const router = Router();
 
     // All post routes require authentication
     router.use(requireAuth);
+
+    // Idempotency protection on mutation routes (POST/PUT only)
+    router.use(idempotency);
 
     router.get('/', validate(paginationSchema, 'query'), handlers.list);
     router.get('/:id', validate(postIdSchema, 'params'), handlers.show);

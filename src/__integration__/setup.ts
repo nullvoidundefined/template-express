@@ -64,7 +64,7 @@ beforeAll(async () => {
 
 // Truncate all application tables between tests
 beforeEach(async () => {
-    await testPool.query('TRUNCATE sessions, posts, users CASCADE');
+    await testPool.query('TRUNCATE idempotency_keys, sessions, posts, users CASCADE');
 });
 
 afterAll(async () => {
