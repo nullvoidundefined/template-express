@@ -1,4 +1,4 @@
-# Demo Express
+# Template Express
 
 ## Conventions
 
