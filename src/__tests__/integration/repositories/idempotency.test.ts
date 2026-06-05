@@ -7,39 +7,42 @@ describe('idempotency repository', () => {
     const idempotencyRepo = createIdempotencyRepo(testPool);
     const usersRepo = createUsersRepo(testPool);
 
-    async function seedUser(email = 'user@test.com') {
-        await usersRepo.insertUser(email, 'hash');
+    async function seedUser(email = 'user@test.com'): Promise<string> {
+        const id = await usersRepo.insertUser(email, 'hash');
+        if (!id) throw new Error('seed user failed');
+        return id;
     }
 
     describe('store and findByKey', () => {
         it('stores a response and retrieves it by key', async () => {
-            await seedUser();
-            await idempotencyRepo.store('key-1', 'user@test.com', 201, { id: 1 });
+            const userId = await seedUser();
+            await idempotencyRepo.store('key-1', userId, 201, { id: 1 });
 
-            const result = await idempotencyRepo.findByKey('key-1', 'user@test.com');
+            const result = await idempotencyRepo.findByKey('key-1', userId);
 
             expect(result).toEqual({ status_code: 201, response_body: { id: 1 } });
         });
 
         it('returns undefined for an unknown key', async () => {
-            const result = await idempotencyRepo.findByKey('nonexistent', 'user@test.com');
+            const userId = await seedUser();
+            const result = await idempotencyRepo.findByKey('nonexistent', userId);
 
             expect(result).toBeUndefined();
         });
 
         it('scopes keys per user', async () => {
-            await seedUser('a@test.com');
-            await seedUser('b@test.com');
-            await idempotencyRepo.store('shared-key', 'a@test.com', 201, { owner: 'a' });
+            const userA = await seedUser('a@test.com');
+            const userB = await seedUser('b@test.com');
+            await idempotencyRepo.store('shared-key', userA, 201, { owner: 'a' });
 
-            const result = await idempotencyRepo.findByKey('shared-key', 'b@test.com');
+            const result = await idempotencyRepo.findByKey('shared-key', userB);
 
             expect(result).toBeUndefined();
         });
 
         it('returns undefined for expired keys', async () => {
-            await seedUser();
-            await idempotencyRepo.store('old-key', 'user@test.com', 201, { id: 1 });
+            const userId = await seedUser();
+            await idempotencyRepo.store('old-key', userId, 201, { id: 1 });
 
             // Backdate to 25 hours ago (past the 24-hour TTL)
             await testPool.query(
@@ -47,7 +50,7 @@ describe('idempotency repository', () => {
                 ['old-key'],
             );
 
-            const result = await idempotencyRepo.findByKey('old-key', 'user@test.com');
+            const result = await idempotencyRepo.findByKey('old-key', userId);
 
             expect(result).toBeUndefined();
         });
@@ -55,12 +58,12 @@ describe('idempotency repository', () => {
 
     describe('cascade on user delete', () => {
         it('removes keys when the user is deleted', async () => {
-            await seedUser('cascade@test.com');
-            await idempotencyRepo.store('key-2', 'cascade@test.com', 200, {});
+            const userId = await seedUser('cascade@test.com');
+            await idempotencyRepo.store('key-2', userId, 200, {});
 
-            await testPool.query('DELETE FROM users WHERE email = $1', ['cascade@test.com']);
+            await testPool.query('DELETE FROM users WHERE id = $1', [userId]);
 
-            const result = await idempotencyRepo.findByKey('key-2', 'cascade@test.com');
+            const result = await idempotencyRepo.findByKey('key-2', userId);
             expect(result).toBeUndefined();
         });
     });

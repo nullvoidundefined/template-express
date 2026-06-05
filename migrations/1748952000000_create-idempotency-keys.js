@@ -7,8 +7,8 @@
 export const up = (pgm) => {
   pgm.createTable('idempotency_keys', {
     key: { type: 'text', notNull: true },
-    email: {
-      type: 'text',
+    user_id: {
+      type: 'uuid',
       notNull: true,
       references: 'users',
       onDelete: 'CASCADE',
@@ -18,7 +18,7 @@ export const up = (pgm) => {
     created_at: { type: 'timestamptz', notNull: true, default: pgm.func('NOW()') },
   }, {
     constraints: {
-      primaryKey: ['key', 'email'],
+      primaryKey: ['key', 'user_id'],
     },
   });
 };

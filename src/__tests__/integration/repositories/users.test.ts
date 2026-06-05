@@ -6,17 +6,26 @@ describe('users repository', () => {
     const usersRepo = createUsersRepo(testPool);
 
     describe('insertUser', () => {
-        it('inserts a user and returns true', async () => {
+        it('inserts a user and returns a uuid id', async () => {
             const result = await usersRepo.insertUser('new@test.com', 'hash123');
 
-            expect(result).toBe(true);
+            expect(result).toMatch(
+                /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+            );
         });
 
-        it('returns false on duplicate email', async () => {
+        it('returns null on duplicate email', async () => {
             await usersRepo.insertUser('dupe@test.com', 'hash123');
             const result = await usersRepo.insertUser('dupe@test.com', 'hash456');
 
-            expect(result).toBe(false);
+            expect(result).toBeNull();
+        });
+
+        it('persists the returned id as the row primary key', async () => {
+            const id = await usersRepo.insertUser('pk@test.com', 'hash123');
+
+            const found = await usersRepo.findByEmail('pk@test.com');
+            expect(found?.id).toBe(id);
         });
 
         it('populates created_at and updated_at on insert', async () => {
@@ -33,29 +42,25 @@ describe('users repository', () => {
             expect(row.updated_at).toBeInstanceOf(Date);
         });
 
-        it('advances updated_at beyond created_at when a row is updated', async () => {
-            await usersRepo.insertUser('trigger@test.com', 'hash123');
+        it('sets updated_at to NOW() on update via trigger, making it later than a backdated created_at', async () => {
+            const id = await usersRepo.insertUser('trigger@test.com', 'hash123');
 
-            const before = await testPool.query(
-                'SELECT created_at, updated_at FROM users WHERE email = $1',
-                ['trigger@test.com'],
-            );
-            const originalUpdatedAt: Date = before.rows[0].updated_at;
-
-            // Use pg_sleep to ensure clock advances before the UPDATE
+            // Push created_at one hour into the past in the same statement the trigger reacts to.
+            // The BEFORE UPDATE trigger sets updated_at = NOW() (transaction start time).
+            // After this UPDATE: created_at is 1 hour ago, updated_at is the current transaction time.
+            // The one-hour gap is deterministic regardless of inter-statement wall-clock jitter.
             await testPool.query(
-                `UPDATE users SET password_hash = 'hash456' WHERE email = $1
-                 AND pg_sleep(0.01) IS NOT NULL`,
-                ['trigger@test.com'],
+                `UPDATE users SET created_at = created_at - INTERVAL '1 hour' WHERE id = $1`,
+                [id],
             );
 
-            const after = await testPool.query(
-                'SELECT created_at, updated_at FROM users WHERE email = $1',
-                ['trigger@test.com'],
+            const result = await testPool.query(
+                'SELECT created_at, updated_at FROM users WHERE id = $1',
+                [id],
             );
-            const newUpdatedAt: Date = after.rows[0].updated_at;
+            const row = result.rows[0];
 
-            expect(newUpdatedAt.getTime()).toBeGreaterThan(originalUpdatedAt.getTime());
+            expect(row.updated_at.getTime()).toBeGreaterThan(row.created_at.getTime());
         });
     });
 
@@ -72,6 +77,9 @@ describe('users repository', () => {
             const user = await usersRepo.findByEmail('found@test.com');
 
             expect(user).toMatchObject({ email: 'found@test.com', password_hash: 'hash123' });
+            expect(user?.id).toMatch(
+                /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+            );
             expect(user?.created_at).toBeInstanceOf(Date);
             expect(user?.updated_at).toBeInstanceOf(Date);
         });

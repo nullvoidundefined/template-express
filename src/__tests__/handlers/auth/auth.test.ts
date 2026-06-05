@@ -6,18 +6,29 @@ import type { SessionsRepo } from '../../../repositories/sessions/sessions.js';
 import type { UsersRepo } from '../../../repositories/users/users.js';
 import { createMockReq, createMockRes } from '../../helpers.js';
 
+// Deterministic uuid per email so findByEmail and insertUser agree on id
+function idForEmail(email: string): string {
+    return `00000000-0000-0000-0000-${email.length.toString().padStart(12, '0')}`;
+}
+
 function createMockUsersRepo(users: Map<string, string> = new Map()): UsersRepo {
     return {
         async findByEmail(email: string) {
             const hash = users.get(email);
             if (!hash) return undefined;
             const now = new Date();
-            return { created_at: now, email, password_hash: hash, updated_at: now };
+            return {
+                created_at: now,
+                email,
+                id: idForEmail(email),
+                password_hash: hash,
+                updated_at: now,
+            };
         },
         async insertUser(email: string, passwordHash: string) {
-            if (users.has(email)) return false;
+            if (users.has(email)) return null;
             users.set(email, passwordHash);
-            return true;
+            return idForEmail(email);
         },
     };
 }
@@ -52,7 +63,9 @@ describe('auth handlers', () => {
 
     describe('me', () => {
         it('returns the authenticated email', async () => {
-            const req = createMockReq({ email: 'user@test.com' });
+            const req = createMockReq({
+                user: { email: 'user@test.com', id: idForEmail('user@test.com') },
+            });
             const res = createMockRes();
 
             handlers.me(req, res);

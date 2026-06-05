@@ -4,7 +4,9 @@ import { createRequireAuth } from '../../../middleware/requireAuth/requireAuth.j
 import type { SessionsRepo } from '../../../repositories/sessions/sessions.js';
 import { createMockReq, createMockRes } from '../../helpers.js';
 
-function createMockSessionsRepo(validTokens: Map<string, string> = new Map()): SessionsRepo {
+function createMockSessionsRepo(
+    validTokens: Map<string, { email: string; id: string }> = new Map(),
+): SessionsRepo {
     return {
         createSession: async () => {},
         deleteExpiredSessions: async () => {},
@@ -51,9 +53,12 @@ describe('requireAuth middleware', () => {
         expect(nextCalled).toBe(false);
     });
 
-    it('sets req.email and calls next on valid session', async () => {
+    it('sets req.user and calls next on valid session', async () => {
         // Mock stores the hashed token since middleware hashes before lookup
-        const tokens = new Map([[hashToken('valid-token'), 'user@test.com']]);
+        const userId = '11111111-1111-1111-1111-111111111111';
+        const tokens = new Map([
+            [hashToken('valid-token'), { email: 'user@test.com', id: userId }],
+        ]);
         sessionsRepo = createMockSessionsRepo(tokens);
         requireAuth = createRequireAuth(sessionsRepo);
 
@@ -65,7 +70,7 @@ describe('requireAuth middleware', () => {
             nextCalled = true;
         });
 
-        expect(req.email).toBe('user@test.com');
+        expect(req.user).toEqual({ email: 'user@test.com', id: userId });
         expect(nextCalled).toBe(true);
     });
 });

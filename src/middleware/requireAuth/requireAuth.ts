@@ -18,8 +18,8 @@ function createRequireAuth(sessionsRepo: SessionsRepo) {
         }
 
         // Hash the raw token before looking it up in the database
-        const email = await sessionsRepo.findSession(hashToken(token));
-        if (!email) {
+        const user = await sessionsRepo.findSession(hashToken(token));
+        if (!user) {
             res.clearCookie(AUTH.COOKIE_NAME);
             res.status(HTTP.STATUS.UNAUTHORIZED).json(
                 createErrorResponse(ERROR_CODES.AUTH.SESSION_EXPIRED, 'Session expired'),
@@ -28,7 +28,7 @@ function createRequireAuth(sessionsRepo: SessionsRepo) {
         }
 
         // Attach authenticated user to the request for downstream handlers
-        req.email = email;
+        req.user = { email: user.email, id: user.id };
         next();
     }
 

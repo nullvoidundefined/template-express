@@ -13,15 +13,15 @@ function createIdempotencyMiddleware(idempotencyRepo: IdempotencyRepo) {
             return;
         }
 
-        // requireAuth runs before this on protected routes, so missing email
+        // requireAuth runs before this on protected routes, so missing user
         // means a public route -- skip silently rather than erroring
-        if (!req.email) {
+        if (!req.user) {
             next();
             return;
         }
 
         // Check if this key has already been processed
-        const existing = await idempotencyRepo.findByKey(key, req.email);
+        const existing = await idempotencyRepo.findByKey(key, req.user.id);
         if (existing) {
             res.status(existing.status_code).json(existing.response_body);
             return;
@@ -32,7 +32,7 @@ function createIdempotencyMiddleware(idempotencyRepo: IdempotencyRepo) {
         res.json = function (body: unknown) {
             // Store the response for future replays of this key
             idempotencyRepo
-                .store(key, req.email!, res.statusCode, body)
+                .store(key, req.user!.id, res.statusCode, body)
                 .catch(() => {
                     // Storage failure shouldn't break the response
                     req.log.error('Failed to store idempotency key');

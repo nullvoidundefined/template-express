@@ -7,8 +7,8 @@
 export const up = (pgm) => {
   pgm.createTable('sessions', {
     token: { type: 'text', primaryKey: true },
-    email: {
-      type: 'text',
+    user_id: {
+      type: 'uuid',
       notNull: true,
       references: 'users',
       onDelete: 'CASCADE',

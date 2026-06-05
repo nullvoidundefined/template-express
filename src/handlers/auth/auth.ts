@@ -17,7 +17,7 @@ interface AuthHandlerDeps {
 function createAuthHandlers({ authHelper, sessionsRepo, usersRepo }: AuthHandlerDeps) {
     // Returns the authenticated user's identity from an existing session
     function me(req: Request, res: Response) {
-        res.json({ email: req.email });
+        res.json({ email: req.user!.email });
     }
 
     async function login(req: Request, res: Response) {
@@ -32,7 +32,7 @@ function createAuthHandlers({ authHelper, sessionsRepo, usersRepo }: AuthHandler
             return;
         }
 
-        await authHelper.createSession(res, email);
+        await authHelper.createSession(res, user.id);
         res.json({ email });
     }
 
@@ -51,17 +51,17 @@ function createAuthHandlers({ authHelper, sessionsRepo, usersRepo }: AuthHandler
     async function register(req: Request, res: Response) {
         const { email, password } = req.body;
 
-        // Insert user, relying on primary key constraint to prevent duplicates
+        // Insert user; the unique constraint on email prevents duplicates
         const passwordHash = await bcrypt.hash(password, AUTH.LIMITS.BCRYPT_SALT_ROUNDS);
-        const inserted = await usersRepo.insertUser(email, passwordHash);
-        if (!inserted) {
+        const userId = await usersRepo.insertUser(email, passwordHash);
+        if (!userId) {
             res.status(HTTP.STATUS.CONFLICT).json(
                 createErrorResponse(ERROR_CODES.AUTH.EMAIL_ALREADY_REGISTERED, 'Email already registered'),
             );
             return;
         }
 
-        await authHelper.createSession(res, email);
+        await authHelper.createSession(res, userId);
         res.status(HTTP.STATUS.CREATED).json({ email });
     }
 

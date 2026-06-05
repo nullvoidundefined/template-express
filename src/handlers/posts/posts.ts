@@ -7,14 +7,14 @@ function createPostsHandlers(postsRepo: PostsRepo) {
     async function create(req: Request, res: Response) {
         const { title, body } = req.body;
 
-        const post = await postsRepo.createPost(req.email!, title, body);
+        const post = await postsRepo.createPost(req.user!.id, title, body);
         res.status(HTTP.STATUS.CREATED).json(post);
     }
 
     async function list(req: Request, res: Response) {
         const { limit, offset } = req.query as unknown as { limit: number; offset: number };
 
-        const { posts, total } = await postsRepo.findByEmail(req.email!, limit, offset);
+        const { posts, total } = await postsRepo.findByUserId(req.user!.id, limit, offset);
         res.json({ posts, total, limit, offset });
     }
 
@@ -22,7 +22,7 @@ function createPostsHandlers(postsRepo: PostsRepo) {
         const { id } = req.params as unknown as { id: number };
 
         // Only delete if the post belongs to the authenticated user
-        const deleted = await postsRepo.deletePost(id, req.email!);
+        const deleted = await postsRepo.deletePost(id, req.user!.id);
         if (!deleted) {
             res.status(HTTP.STATUS.NOT_FOUND).json(
                 createErrorResponse(ERROR_CODES.POSTS.NOT_FOUND, 'Post not found'),
@@ -38,7 +38,7 @@ function createPostsHandlers(postsRepo: PostsRepo) {
         const post = await postsRepo.findById(id);
 
         // Only show posts belonging to the authenticated user
-        if (!post || post.email !== req.email) {
+        if (!post || post.user_id !== req.user!.id) {
             res.status(HTTP.STATUS.NOT_FOUND).json(
                 createErrorResponse(ERROR_CODES.POSTS.NOT_FOUND, 'Post not found'),
             );
@@ -53,7 +53,7 @@ function createPostsHandlers(postsRepo: PostsRepo) {
         const { title, body } = req.body;
 
         // Only update if the post belongs to the authenticated user
-        const post = await postsRepo.updatePost(id, req.email!, title, body);
+        const post = await postsRepo.updatePost(id, req.user!.id, title, body);
         if (!post) {
             res.status(HTTP.STATUS.NOT_FOUND).json(
                 createErrorResponse(ERROR_CODES.POSTS.NOT_FOUND, 'Post not found'),

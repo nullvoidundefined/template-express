@@ -15,7 +15,8 @@ export const up = (pgm) => {
     `);
 
     pgm.createTable('users', {
-        email: { type: 'text', primaryKey: true },
+        id: { type: 'uuid', primaryKey: true, default: pgm.func('gen_random_uuid()') },
+        email: { type: 'text', notNull: true, unique: true },
         password_hash: { type: 'text', notNull: true },
         created_at: { type: 'timestamptz', notNull: true, default: pgm.func('NOW()') },
         updated_at: { type: 'timestamptz', notNull: true, default: pgm.func('NOW()') },
