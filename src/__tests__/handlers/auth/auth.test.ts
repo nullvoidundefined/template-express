@@ -11,7 +11,8 @@ function createMockUsersRepo(users: Map<string, string> = new Map()): UsersRepo 
         async findByEmail(email: string) {
             const hash = users.get(email);
             if (!hash) return undefined;
-            return { email, password_hash: hash };
+            const now = new Date();
+            return { created_at: now, email, password_hash: hash, updated_at: now };
         },
         async insertUser(email: string, passwordHash: string) {
             if (users.has(email)) return false;

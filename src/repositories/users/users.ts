@@ -1,15 +1,18 @@
 import type { Pool } from 'pg';
 
 interface User {
+    created_at: Date;
     email: string;
     password_hash: string;
+    updated_at: Date;
 }
 
 function createUsersRepo(pool: Pool) {
     async function findByEmail(email: string): Promise<User | undefined> {
-        const result = await pool.query('SELECT email, password_hash FROM users WHERE email = $1', [
-            email,
-        ]);
+        const result = await pool.query(
+            'SELECT created_at, email, password_hash, updated_at FROM users WHERE email = $1',
+            [email],
+        );
         return result.rows[0];
     }
 
