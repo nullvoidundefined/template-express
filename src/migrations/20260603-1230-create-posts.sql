@@ -1,7 +1,0 @@
-CREATE TABLE posts (
-    id SERIAL PRIMARY KEY,
-    email TEXT NOT NULL REFERENCES users(email) ON DELETE CASCADE,
-    title TEXT NOT NULL,
-    body TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);

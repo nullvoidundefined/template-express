@@ -5,22 +5,22 @@ import helmet from 'helmet';
 import { config } from './config.js';
 import { HTTP } from './constants/http.js';
 import { createErrorResponse, ERROR_CODES } from './errors.js';
-import { createAuthHandlers } from './handlers/auth.js';
-import { createPostsHandlers } from './handlers/posts.js';
-import { createAuthHelper } from './helpers/auth.js';
-import { createCorsMiddleware } from './middleware/cors.js';
-import { errorHandler } from './middleware/errorHandler.js';
-import { createIdempotencyMiddleware } from './middleware/idempotency.js';
-import { httpLogger } from './middleware/logger.js';
-import { authLimiter, generalLimiter } from './middleware/rateLimiter.js';
-import { createRequireAuth } from './middleware/requireAuth.js';
-import { createIdempotencyRepo } from './repositories/idempotency.js';
-import { createPostsRepo } from './repositories/posts.js';
-import { createSessionsRepo } from './repositories/sessions.js';
-import { createUsersRepo } from './repositories/users.js';
-import { createAuthRouter } from './routes/auth.js';
-import { createHealthRouter } from './routes/health.js';
-import { createPostsRouter } from './routes/posts.js';
+import { createAuthHandlers } from './handlers/auth/auth.js';
+import { createPostsHandlers } from './handlers/posts/posts.js';
+import { createAuthHelper } from './helpers/auth/auth.js';
+import { createCorsMiddleware } from './middleware/cors/cors.js';
+import { errorHandler } from './middleware/errorHandler/errorHandler.js';
+import { createIdempotencyMiddleware } from './middleware/idempotency/idempotency.js';
+import { httpLogger } from './middleware/logger/logger.js';
+import { authLimiter, generalLimiter } from './middleware/rateLimiter/rateLimiter.js';
+import { createRequireAuth } from './middleware/requireAuth/requireAuth.js';
+import { createIdempotencyRepo } from './repositories/idempotency/idempotency.js';
+import { createPostsRepo } from './repositories/posts/posts.js';
+import { createSessionsRepo } from './repositories/sessions/sessions.js';
+import { createUsersRepo } from './repositories/users/users.js';
+import { createAuthRouter } from './routes/auth/auth.js';
+import { createHealthRouter } from './routes/health/health.js';
+import { createPostsRouter } from './routes/posts/posts.js';
 
 // Builds a fully wired Express app without starting the listener.
 // Accepts a pool so tests can pass a test database connection.

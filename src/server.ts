@@ -2,7 +2,7 @@ import pool from './db.js';
 import { config } from './config.js';
 import { HTTP } from './constants/http.js';
 import { createApp } from './app.js';
-import { logger } from './middleware/logger.js';
+import { logger } from './middleware/logger/logger.js';
 
 const { app, sessionsRepo } = createApp(pool);
 

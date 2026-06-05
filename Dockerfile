@@ -19,8 +19,8 @@ RUN npm ci --omit=dev
 # Compiled JavaScript
 COPY --from=build /app/dist/ dist/
 
-# Migration files needed by the migrate script at deploy time
-COPY --from=build /app/src/migrations/ dist/migrations/
+# Migration files needed by node-pg-migrate at deploy time
+COPY migrations/ migrations/
 
 ENV NODE_ENV=production
 EXPOSE 3001
